@@ -1,0 +1,3 @@
+package pokemonapi
+
+func GetPokemon()
