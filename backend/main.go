@@ -24,12 +24,11 @@ func main(){
 			}
 		})
 
-		r.Route("/{pokename}", func(r chi.Router) {
-			r.Get("/", pokemonapi.GetPokemonByName)
-		})
-
+		r.Get("/{pokename}", pokemonapi.GetPokemonByName)
 		r.Get("/stat/{statname}", pokemonapi.GetStatByName)
 		r.Get("/nature/{naturename}", pokemonapi.GetNatureByName)
+		r.Get("/item/{itemname}", pokemonapi.GetItemByName)
+		r.Get("/move/{movename}", pokemonapi.GetMoveByName)
 	})
 
 	// Serve's up, man

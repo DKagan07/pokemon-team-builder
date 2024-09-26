@@ -31,8 +31,10 @@ const pokemonApiV2 = "https://pokeapi.co/api/v2"
 	Per pokemon, you can only have 510 EVs
 */
 
-// TODO: Fix error handling
+// TODO: Add caching
+// TODO: Perhaps add a database and auth so people can save their teams
 
+// GetPokemonByName fetches a types.Pokemon from the Pokemon API
 func GetPokemonByName(w http.ResponseWriter, r *http.Request) {
 	// get name from url
 	pokename := chi.URLParam(r, "pokename")
@@ -48,7 +50,7 @@ func GetPokemonByName(w http.ResponseWriter, r *http.Request) {
 
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println("err")
+		http.Error(w, fmt.Sprintf("reading from response body: %v", err.Error()), http.StatusInternalServerError)
 	}
 
 	var pokemon types.Pokemon
@@ -57,6 +59,7 @@ func GetPokemonByName(w http.ResponseWriter, r *http.Request) {
 	resp.Write(w)
 }
 
+// GetStatByName fetches a types.Stat from the Pokemon API
 func GetStatByName(w http.ResponseWriter, r *http.Request) {
 	// get stat out of URL
 	stat := chi.URLParam(r, "statname")
@@ -73,7 +76,7 @@ func GetStatByName(w http.ResponseWriter, r *http.Request) {
 
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println("err")
+		http.Error(w, fmt.Sprintf("reading from response body: %v", err.Error()), http.StatusInternalServerError)
 	}
 
 	var stats types.Stat
@@ -82,6 +85,7 @@ func GetStatByName(w http.ResponseWriter, r *http.Request) {
 	resp.Write(w)
 }
 
+// GetNatureByName fetches a types.Nature from the Pokemon API
 func GetNatureByName(w http.ResponseWriter, r *http.Request) {
 	nature := chi.URLParam(r, "naturename")
 
@@ -96,11 +100,57 @@ func GetNatureByName(w http.ResponseWriter, r *http.Request) {
 
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println("err")
+		http.Error(w, fmt.Sprintf("reading from response body: %v", err.Error()), http.StatusInternalServerError)
 	}
 
 	var natureInfo types.Nature
 	json.Unmarshal(b, &natureInfo)
+
+	resp.Write(w)
+}
+
+func GetItemByName(w http.ResponseWriter, r *http.Request) {
+	item := chi.URLParam(r, "itemname")
+
+	url := fmt.Sprintf("%s/item/%s", pokemonApiV2, item)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("getting item from api: %v", err.Error()), http.StatusNotFound)
+		return
+	}
+	defer resp.Body.Close()
+
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("reading from response body: %v", err.Error()), http.StatusInternalServerError)
+	}
+
+	var itemInfo types.Item
+	json.Unmarshal(b, &itemInfo)
+
+	resp.Write(w)
+}
+
+func GetMoveByName(w http.ResponseWriter, r *http.Request) {
+	move := chi.URLParam(r, "movename")
+
+	url := fmt.Sprintf("%s/move/%s", pokemonApiV2, move)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("getting move from api: %v", err.Error()), http.StatusNotFound)
+		return
+	}
+	defer resp.Body.Close()
+
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("reading from response body: %v", err.Error()), http.StatusInternalServerError)
+	}
+
+	var moveInfo types.Move
+	json.Unmarshal(b, &moveInfo)
 
 	resp.Write(w)
 }
