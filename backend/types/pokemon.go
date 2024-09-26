@@ -272,3 +272,93 @@ type Pokemon struct {
 	} `json:"past_types,omitempty"`
 }
 
+
+type Stat struct {
+	ID             int    `json:"id"`
+	Name           string `json:"name"`
+	GameIndex      int    `json:"game_index"`
+	IsBattleOnly   bool   `json:"is_battle_only"`
+	AffectingMoves struct {
+		Increase []struct {
+			Change int `json:"change"`
+			Move   struct {
+				Name string `json:"name"`
+				URL  string `json:"url"`
+			} `json:"move"`
+		} `json:"increase"`
+		Decrease []struct {
+			Change int `json:"change"`
+			Move   struct {
+				Name string `json:"name"`
+				URL  string `json:"url"`
+			} `json:"move"`
+		} `json:"decrease"`
+	} `json:"affecting_moves"`
+	AffectingNatures struct {
+		Increase []struct {
+			Name string `json:"name"`
+			URL  string `json:"url"`
+		} `json:"increase"`
+		Decrease []struct {
+			Name string `json:"name"`
+			URL  string `json:"url"`
+		} `json:"decrease"`
+	} `json:"affecting_natures"`
+	Characteristics []struct {
+		URL string `json:"url"`
+	} `json:"characteristics"`
+	MoveDamageClass struct {
+		Name string `json:"name"`
+		URL  string `json:"url"`
+	} `json:"move_damage_class"`
+	Names []struct {
+		Name     string `json:"name"`
+		Language struct {
+			Name string `json:"name"`
+			URL  string `json:"url"`
+		} `json:"language"`
+	} `json:"names"`
+}
+
+type Nature struct {
+	ID            int    `json:"id"`
+	Name          string `json:"name"`
+	DecreasedStat struct {
+		Name string `json:"name"`
+		URL  string `json:"url"`
+	} `json:"decreased_stat"`
+	IncreasedStat struct {
+		Name string `json:"name"`
+		URL  string `json:"url"`
+	} `json:"increased_stat"`
+	LikesFlavor struct {
+		Name string `json:"name"`
+		URL  string `json:"url"`
+	} `json:"likes_flavor"`
+	HatesFlavor struct {
+		Name string `json:"name"`
+		URL  string `json:"url"`
+	} `json:"hates_flavor"`
+	PokeathlonStatChanges []struct {
+		MaxChange      int `json:"max_change"`
+		PokeathlonStat struct {
+			Name string `json:"name"`
+			URL  string `json:"url"`
+		} `json:"pokeathlon_stat"`
+	} `json:"pokeathlon_stat_changes"`
+	MoveBattleStylePreferences []struct {
+		LowHpPreference  int `json:"low_hp_preference"`
+		HighHpPreference int `json:"high_hp_preference"`
+		MoveBattleStyle  struct {
+			Name string `json:"name"`
+			URL  string `json:"url"`
+		} `json:"move_battle_style"`
+	} `json:"move_battle_style_preferences"`
+	Names []struct {
+		Name     string `json:"name"`
+		Language struct {
+			Name string `json:"name"`
+			URL  string `json:"url"`
+		} `json:"language"`
+	} `json:"names"`
+}

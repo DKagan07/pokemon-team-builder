@@ -28,6 +28,8 @@ func main(){
 			r.Get("/", pokemonapi.GetPokemonByName)
 		})
 
+		r.Get("/stat/{statname}", pokemonapi.GetStatByName)
+		r.Get("/nature/{naturename}", pokemonapi.GetNatureByName)
 	})
 
 	// Serve's up, man
