@@ -56,7 +56,8 @@ func GetPokemonByName(w http.ResponseWriter, r *http.Request) {
 	var pokemon types.Pokemon
 	json.Unmarshal(b, &pokemon)
 
-	resp.Write(w)
+	w.Header().Add("Content-Type", "application/json")
+	w.Write(b)
 }
 
 // GetStatByName fetches a types.Stat from the Pokemon API
@@ -82,7 +83,8 @@ func GetStatByName(w http.ResponseWriter, r *http.Request) {
 	var stats types.Stat
 	json.Unmarshal(b, &stats)
 
-	resp.Write(w)
+	w.Header().Add("Content-Type", "application/json")
+	w.Write(b)
 }
 
 // GetNatureByName fetches a types.Nature from the Pokemon API
@@ -106,7 +108,8 @@ func GetNatureByName(w http.ResponseWriter, r *http.Request) {
 	var natureInfo types.Nature
 	json.Unmarshal(b, &natureInfo)
 
-	resp.Write(w)
+	w.Header().Add("Content-Type", "application/json")
+	w.Write(b)
 }
 
 func GetItemByName(w http.ResponseWriter, r *http.Request) {
@@ -129,7 +132,8 @@ func GetItemByName(w http.ResponseWriter, r *http.Request) {
 	var itemInfo types.Item
 	json.Unmarshal(b, &itemInfo)
 
-	resp.Write(w)
+	w.Header().Add("Content-Type", "application/json")
+	w.Write(b)
 }
 
 func GetMoveByName(w http.ResponseWriter, r *http.Request) {
@@ -152,5 +156,6 @@ func GetMoveByName(w http.ResponseWriter, r *http.Request) {
 	var moveInfo types.Move
 	json.Unmarshal(b, &moveInfo)
 
-	resp.Write(w)
+	w.Header().Add("Content-Type", "application/json")
+	w.Write(b)
 }
