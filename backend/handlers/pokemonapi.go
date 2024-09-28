@@ -38,6 +38,7 @@ const pokemonApiV2 = "https://pokeapi.co/api/v2"
 func GetPokemonByName(w http.ResponseWriter, r *http.Request) {
 	// get name from url
 	pokename := chi.URLParam(r, "pokename")
+	fmt.Println("pokemon name: ", pokename)
 
 	url := fmt.Sprintf("%s/pokemon/%s", pokemonApiV2, pokename)
 
