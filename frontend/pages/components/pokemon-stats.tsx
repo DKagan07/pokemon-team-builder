@@ -1,18 +1,9 @@
-import { ReactNode } from "react";
-import { Pokemon } from "../types/pokemon";
+import { Pokemon } from "@/lib/pokemon";
 
-export function Conditional({
-  showWhen,
-  children,
-}: {
-  showWhen: boolean;
-  children: ReactNode;
-}) {
-  if (showWhen) return <div>{children}</div>;
-  return <></>;
-}
-
-export function PokemonStats({ pokemon }: { pokemon: Pokemon }) {
+export default function PokemonStats({ pokemon }: { pokemon: Pokemon }) {
+  if (pokemon === undefined) {
+    return <></>;
+  }
   return (
     <div>
       <h3>{pokemon.name}</h3>

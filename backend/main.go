@@ -3,21 +3,22 @@ package main
 import (
 	"encoding/json"
 	"net/http"
-	pokemonapi "pokemon-team-builder/handlers"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+
+	pokemonapi "pokemon-team-builder/handlers"
 )
 
-func main(){
+func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 
 	// Basic CORS
 	r.Use(cors.Handler(cors.Options{
 		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
-		AllowedOrigins:   []string{"https://*", "http://*"},
+		AllowedOrigins: []string{"https://*", "http://*"},
 		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
