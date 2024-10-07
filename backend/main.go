@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -46,6 +47,7 @@ func main() {
 	})
 
 	// Serve's up, man
+	log.Printf("Starting server on port %s", "3001")
 	if err := http.ListenAndServe(":3001", r); err != nil {
 		panic("cannot ListenAndServe")
 	}
