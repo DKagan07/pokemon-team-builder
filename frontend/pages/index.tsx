@@ -17,42 +17,42 @@ import Conditional from "./components/conditional";
 // });
 
 export default function Home() {
-  const [pokemonName, setPokemonName] = useState("");
-  const [pokemon, setPokemon] = useState<Pokemon>(InitialPokeSetter);
+    const [pokemonName, setPokemonName] = useState("");
+    const [pokemon, setPokemon] = useState<Pokemon>(InitialPokeSetter);
 
-  const fetchMessage = async (name: string) => {
-    console.log({ name });
+    const fetchMessage = async (name: string) => {
+        console.log({ name });
 
-    const response = await fetch(`http://localhost:3001/${name}`);
-    const data = await response.json();
-    console.log({ data });
+        const response = await fetch(`http://localhost:3001/${name}`);
+        const data = await response.json();
+        console.log({ data });
 
-    setPokemon(data);
-    console.log({ pokemon });
-  };
+        setPokemon(data);
+        console.log({ pokemon });
+    };
 
-  return (
-    <>
-      <form id="pokename-form">
-        <input
-          id="pokename"
-          type="text"
-          name="pokename"
-          onChange={(e) => setPokemonName(e.target.value)}
-        />
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            fetchMessage(pokemonName);
-          }}
-        >
-          Search Pokemon
-        </button>
-      </form>
+    return (
+        <>
+            <form id="pokename-form">
+                <input
+                    id="pokename"
+                    type="text"
+                    name="pokename"
+                    onChange={(e) => setPokemonName(e.target.value)}
+                />
+                <button
+                    onClick={(e) => {
+                        e.preventDefault();
+                        fetchMessage(pokemonName);
+                    }}
+                >
+                    Search Pokemon
+                </button>
+            </form>
 
-      <Conditional showWhen={pokemon !== undefined}>
-        <PokemonStats pokemon={pokemon} />
-      </Conditional>
-    </>
-  );
+            <Conditional showWhen={pokemon !== undefined}>
+                <PokemonStats pokemon={pokemon} />
+            </Conditional>
+        </>
+    );
 }

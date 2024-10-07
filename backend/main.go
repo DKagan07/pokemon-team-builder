@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"log"
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -10,6 +10,10 @@ import (
 	"github.com/go-chi/cors"
 
 	pokemonapi "pokemon-team-builder/handlers"
+)
+
+const (
+	PORT = 3001
 )
 
 func main() {
@@ -47,8 +51,8 @@ func main() {
 	})
 
 	// Serve's up, man
-	log.Printf("Starting server on port %s", "3001")
-	if err := http.ListenAndServe(":3001", r); err != nil {
+	fmt.Printf("Starting server on PORT: %d\n", PORT)
+	if err := http.ListenAndServe(fmt.Sprintf(":%d", PORT), r); err != nil {
 		panic("cannot ListenAndServe")
 	}
 }
