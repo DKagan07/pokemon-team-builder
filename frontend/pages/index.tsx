@@ -2,14 +2,13 @@ import { useState } from "react";
 import PokemonStats from "./components/pokemon-stats";
 import { InitialPokeSetter, Pokemon } from "@/lib/pokemon";
 import MiniCard from "./components/pokemon-mini-card";
-// import Conditional from "./components/conditional";
+import { usePokemonState } from "./context/dataContext";
 
 export default function Home() {
     const [pokemonName, setPokemonName] = useState("");
     const [pokemon, setPokemon] = useState<Pokemon>(InitialPokeSetter);
     const [pokemonTeam, setPokemonTeam] = useState<Pokemon[]>([]);
-
-    console.log({ pokemonTeam });
+    const { pokemonState, setPokemonState } = usePokemonState();
 
     const fetchMessage = async (name: string) => {
         // For names that have a space, ex. Iron hands, we need to change it to:
@@ -19,11 +18,11 @@ export default function Home() {
         const response = await fetch(`http://localhost:3001/${name}`);
 
         // This is just for local, FE-only development:
-        // const response = await fetch(`https://pokeapi.co/api/v2/pokemon/clefable/`);
+        // const response = await fetch(
+        //     `https://pokeapi.co/api/v2/pokemon/revavroom/`,
+        // );
 
         const data = await response.json();
-        console.log({ data });
-
         setPokemon(data);
     };
 
@@ -72,6 +71,7 @@ export default function Home() {
                         pokemon={mon}
                         team={pokemonTeam}
                         setTeam={setPokemonTeam}
+                        setData={setPokemonState}
                     />
                 ))}
             </div>
