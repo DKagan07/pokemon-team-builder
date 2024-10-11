@@ -1,4 +1,4 @@
-import { PkmnMove, TestMove } from "@/lib/pkmnMoves";
+import { PkmnMove, /*TestMove */ } from "@/lib/pkmnMoves";
 import { MakeWordReadable } from "@/lib/utils";
 import MoveCard from "@/pages/components/pokemon-move-card";
 import { usePokemonState } from "@/pages/context/dataContext";
@@ -8,11 +8,11 @@ import { useEffect, useState } from "react";
 
 export default function Home() {
     const { pokemonState } = usePokemonState();
-    //
-    // NOTE: This is just to test without hitting the API
-    const [selectedMoves, setSelectedMoves] = useState<PkmnMove[]>([TestMove]);
 
-    // const [selectedMoves, setSelectedMoves] = useState<PkmnMove[]>([]);
+    // NOTE: This is just to test without hitting the API
+    // const [selectedMoves, setSelectedMoves] = useState<PkmnMove[]>([TestMove]);
+
+    const [selectedMoves, setSelectedMoves] = useState<PkmnMove[]>([]);
     const [selectedMoveNames, setSelectedMoveNames] = useState<string[]>([])
     const moves = pokemonState.moves;
 
@@ -30,13 +30,13 @@ export default function Home() {
     }
 
     async function fetchMoveInfo(moveName: string) {
+        // We need to string parse here for moves with a space in them. Ex. We
+        // want to change Aerial Ace to aerial-ace to hit the right endpoint
         moveName = moveName.trim().replace(" ", "-").toLowerCase();
-        // const response = await fetch(`http://localhost:3001/move/${moveName}`);
-
-        console.log({ moveName })
+        const response = await fetch(`http://localhost:3001/move/${moveName}`);
 
         // This is just for local, FE-only development:
-        const response = await fetch(`https://pokeapi.co/api/v2/move/${moveName}/`);
+        // const response = await fetch(`https://pokeapi.co/api/v2/move/${moveName}/`);
 
         const data = await response.json() as PkmnMove;
         setSelectedMoves([...selectedMoves, data]);
@@ -77,7 +77,9 @@ export default function Home() {
                     await fetchMoveInfo(e.target.value)
                 }}
             >
-                {moves.filter((move) => !selectedMoveNames.includes(move.move.name))
+                {moves
+                    .filter((move) => !selectedMoveNames.includes(move.move.name))
+                    .sort((a, b) => a.move.name.localeCompare(b.move.name))
                     .map((move, i) => (
                         <option key={i} value={move.move.name}>
                             {MakeWordReadable(move.move.name)}
@@ -88,44 +90,11 @@ export default function Home() {
             <br />
             <br />
             <br />
-            <div>
+            <div className="grid grid-cols-2 grid-rows-2 gap-3">
                 {selectedMoves.map((move, i) => {
                     return (
-                        <div key={i} className="flex">
-                            {/* Eventually have a move card here*/}
-                            <MoveCard moveInfo={move} />
-                            {/*                            <Image
-                                src={`/${move.type.name}.svg`}
-                                alt="type icon"
-                                height={17.4}
-                                width={15}
-                            />
-                            <h4 className="font-bold size-4 h-auto w-auto">
-                                {MakeWordReadable(move.name)}
-                            </h4>
-                            <h4 className="size-4 h-auto w-auto">
-                                Accuracy: {move.accuracy === null ? "--" : move.accuracy}
-                            </h4>
-                            <h4 className="size-4 h-auto w-auto">
-                                Power: {move.power === null ? "--" : move.power}
-                            </h4>
-
-
-                            <button
-                                onClick={() => {
-                                    removeMoveFromMoves(move);
-                                }}
-                                className="h-[20px] w-[20px]"
-                            >
-                                <Image
-                                    src={`/trash-can-solid.svg`}
-                                    alt="icon to discard pokemon from team"
-                                    height={17.14}
-                                    width={15}
-                                />
-                            </button>
-                            */}
-
+                        <div key={i} className="flex align-center justify-center w-full">
+                            <MoveCard moveInfo={move} removeFromMoves={removeMoveFromMoves} />
                         </div>
                     );
                 })}

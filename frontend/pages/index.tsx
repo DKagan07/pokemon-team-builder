@@ -1,6 +1,6 @@
 import { useState } from "react";
 import PokemonStats from "./components/pokemon-stats";
-import { InitialPokeSetter, Pokemon, TestPkmn } from "@/lib/pokemon";
+import { InitialPokeSetter, Pokemon, /* TestPkmn */ } from "@/lib/pokemon";
 import MiniCard from "./components/pokemon-mini-card";
 import { usePokemonState } from "./context/dataContext";
 
@@ -8,24 +8,24 @@ export default function Home() {
     const [pokemonName, setPokemonName] = useState("");
     const [pokemon, setPokemon] = useState<Pokemon>(InitialPokeSetter);
     const [pokemonTeam, setPokemonTeam] = useState<Pokemon[]>([]);
-    const { _pokemonState, setPokemonState } = usePokemonState();
+    const { pokemonState, setPokemonState } = usePokemonState();
 
+    console.log(pokemonState.name)
     const fetchMessage = async (name: string) => {
-        // For names that have a space, ex. Iron hands, we need to change it to:
+        // For names that have a space, ex. Iron Hands, we need to change it to:
         // "iron-hands"
         name = name.trim().replace(" ", "-").toLowerCase();
         console.log({ name });
-        // const response = await fetch(`http://localhost:3001/${name}`);
+        const response = await fetch(`http://localhost:3001/${name}`);
 
-        // This is just for local, FE-only development:
+        // This is just for local, FE-only development to hit the API:
         // const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${name}/`);
 
-        // const data = await response.json();
-        // console.log({ data });
-        // setPokemon(data);
+        const data = await response.json();
+        setPokemon(data);
 
         // NOTE: This is just to avoid hitting the pokeapi over and over again
-        setPokemon(TestPkmn);
+        // setPokemon(TestPkmn);
     };
 
     const statsObj: { [key: string]: number } = {};

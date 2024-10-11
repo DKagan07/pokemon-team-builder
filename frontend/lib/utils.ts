@@ -39,3 +39,24 @@ export function BarColor(val: number): string {
         }
     }
 }
+
+export const BgColorForMoves: { [key: string]: string } = {
+    bug: "#92bd2d",
+    dark: "#595761",
+    dragon: "#0c6ac8",
+    electric: "#f2d94e",
+    fairy: "#ef90e6",
+    fighting: "#d3425f",
+    fire: "#fba64c",
+    flying: "#a1bbec",
+    ghost: "#5f6dbc",
+    grass: "#60bd58",
+    ground: "#da7c4d",
+    ice: "#76d1c1",
+    normal: "#a0a29f",
+    poison: "#b763cf",
+    psychic: "#fa8582",
+    rock: "#c9bc8a",
+    steel: "#5795a3",
+    water: "#539ddf",
+}
