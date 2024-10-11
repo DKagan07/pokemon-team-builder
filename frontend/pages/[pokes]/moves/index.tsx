@@ -1,32 +1,64 @@
+import { PkmnMove, TestMove } from "@/lib/pkmnMoves";
 import { MakeWordReadable } from "@/lib/utils";
+import MoveCard from "@/pages/components/pokemon-move-card";
 import { usePokemonState } from "@/pages/context/dataContext";
 import Image from "next/image";
-import { useState } from "react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export default function Home() {
     const { pokemonState } = usePokemonState();
-    const [selectedMoves, setSelectedMoves] = useState<string[]>([]);
+    //
+    // NOTE: This is just to test without hitting the API
+    const [selectedMoves, setSelectedMoves] = useState<PkmnMove[]>([TestMove]);
+
+    // const [selectedMoves, setSelectedMoves] = useState<PkmnMove[]>([]);
+    const [selectedMoveNames, setSelectedMoveNames] = useState<string[]>([])
     const moves = pokemonState.moves;
+
+    useEffect(() => {
+        console.log({ selectedMoves })
+    }, [selectedMoves])
 
     if (pokemonState === undefined || pokemonState.name === "") {
         return <></>;
     }
 
-    function addMoveToSeletedMoves(val: string) {
-        if (selectedMoves.length > 4) {
-            console.log("cannot add more than 4 moves to a moveset");
-        }
-        console.log({ val });
-        setSelectedMoves([...selectedMoves, val]);
+    function removeMoveFromMoves(val: PkmnMove) {
+        const newMoveSet = selectedMoves.filter((move) => move.name !== val.name);
+        setSelectedMoves(newMoveSet);
     }
 
-    function removeMoveFromMoves(val: string) {
-        const newMoveSet = selectedMoves.filter((move) => move !== val);
-        setSelectedMoves(newMoveSet);
+    async function fetchMoveInfo(moveName: string) {
+        moveName = moveName.trim().replace(" ", "-").toLowerCase();
+        // const response = await fetch(`http://localhost:3001/move/${moveName}`);
+
+        console.log({ moveName })
+
+        // This is just for local, FE-only development:
+        const response = await fetch(`https://pokeapi.co/api/v2/move/${moveName}/`);
+
+        const data = await response.json() as PkmnMove;
+        setSelectedMoves([...selectedMoves, data]);
+        setSelectedMoveNames([...selectedMoveNames, data.name])
     }
 
     return (
         <div className="m-2 p-2">
+            <div id="go-back" className="flex flex-col p-1">
+                <Link href="/">
+                    <div className="flex">
+                        <Image
+                            src={"/back-arrow.svg"}
+                            alt="back-button"
+                            height={20}
+                            width={20}
+                            className="pr-1"
+                        />
+                        <b>Back</b>
+                    </div>
+                </Link>
+            </div>
             <div className="w-[100px] h-[100px] mx-3">
                 <Image
                     src={pokemonState.sprites.front_default}
@@ -40,18 +72,18 @@ export default function Home() {
                 Pick {MakeWordReadable(pokemonState.name)} Moveset:
             </h1>
             <select
-                onChange={(e) => {
+                onChange={async (e) => {
                     e.preventDefault();
-                    addMoveToSeletedMoves(e.target.value);
+                    await fetchMoveInfo(e.target.value)
                 }}
             >
-                {moves
-                    .filter((move) => !selectedMoves.includes(move.move.name))
+                {moves.filter((move) => !selectedMoveNames.includes(move.move.name))
                     .map((move, i) => (
                         <option key={i} value={move.move.name}>
                             {MakeWordReadable(move.move.name)}
                         </option>
-                    ))}
+                    ))
+                }
             </select>
             <br />
             <br />
@@ -61,11 +93,24 @@ export default function Home() {
                     return (
                         <div key={i} className="flex">
                             {/* Eventually have a move card here*/}
+                            <MoveCard moveInfo={move} />
+                            {/*                            <Image
+                                src={`/${move.type.name}.svg`}
+                                alt="type icon"
+                                height={17.4}
+                                width={15}
+                            />
                             <h4 className="font-bold size-4 h-auto w-auto">
-                                {MakeWordReadable(move)}
+                                {MakeWordReadable(move.name)}
+                            </h4>
+                            <h4 className="size-4 h-auto w-auto">
+                                Accuracy: {move.accuracy === null ? "--" : move.accuracy}
+                            </h4>
+                            <h4 className="size-4 h-auto w-auto">
+                                Power: {move.power === null ? "--" : move.power}
                             </h4>
 
-                            {/* This button would be included in the move card */}
+
                             <button
                                 onClick={() => {
                                     removeMoveFromMoves(move);
@@ -79,6 +124,8 @@ export default function Home() {
                                     width={15}
                                 />
                             </button>
+                            */}
+
                         </div>
                     );
                 })}

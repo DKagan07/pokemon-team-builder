@@ -1,6 +1,6 @@
 import { useState } from "react";
 import PokemonStats from "./components/pokemon-stats";
-import { InitialPokeSetter, Pokemon } from "@/lib/pokemon";
+import { InitialPokeSetter, Pokemon, TestPkmn } from "@/lib/pokemon";
 import MiniCard from "./components/pokemon-mini-card";
 import { usePokemonState } from "./context/dataContext";
 
@@ -8,23 +8,32 @@ export default function Home() {
     const [pokemonName, setPokemonName] = useState("");
     const [pokemon, setPokemon] = useState<Pokemon>(InitialPokeSetter);
     const [pokemonTeam, setPokemonTeam] = useState<Pokemon[]>([]);
-    const { pokemonState, setPokemonState } = usePokemonState();
+    const { _pokemonState, setPokemonState } = usePokemonState();
 
     const fetchMessage = async (name: string) => {
         // For names that have a space, ex. Iron hands, we need to change it to:
         // "iron-hands"
         name = name.trim().replace(" ", "-").toLowerCase();
         console.log({ name });
-        const response = await fetch(`http://localhost:3001/${name}`);
+        // const response = await fetch(`http://localhost:3001/${name}`);
 
         // This is just for local, FE-only development:
-        // const response = await fetch(
-        //     `https://pokeapi.co/api/v2/pokemon/revavroom/`,
-        // );
+        // const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${name}/`);
 
-        const data = await response.json();
-        setPokemon(data);
+        // const data = await response.json();
+        // console.log({ data });
+        // setPokemon(data);
+
+        // NOTE: This is just to avoid hitting the pokeapi over and over again
+        setPokemon(TestPkmn);
     };
+
+    const statsObj: { [key: string]: number } = {};
+    let total = 0;
+    pokemon.stats.map((stat) => {
+        statsObj[stat.stat.name] = stat.base_stat;
+        total += stat.base_stat;
+    });
 
     return (
         <div className="flex flex-col p-2">
@@ -36,7 +45,7 @@ export default function Home() {
                     name="pokename"
                     onChange={(e) => setPokemonName(e.target.value)}
                     placeholder="Search pokemon"
-                    className="placeholder:italic placeholder:text-gray-400 placeholder:p-1 border border-gray-300 rounded-md h-100% mx-3 "
+                    className="placeholder:italic placeholder:text-gray-400 placeholder:p-1 border border-gray-300 rounded-md h-100% mx-3 indent-2"
                 />
                 <button
                     onClick={(e) => {
@@ -49,14 +58,35 @@ export default function Home() {
                 </button>
             </form>
 
-            <PokemonStats
-                pokemon={pokemon}
-                pokemonTeam={pokemonTeam}
-                addTeamAction={setPokemonTeam}
-            />
+            <div className="flex-col align-middle ">
+                <PokemonStats pokemon={pokemon} statsObj={statsObj} />
+                {pokemon === undefined || pokemon.name === "" ? (
+                    <></>
+                ) : (
+                    <div
+                        id="stat-footer"
+                        className="flex w-[365px] justify-around align-middle m-2"
+                    >
+                        <div className="flex justify-center align-middle h-auto pt-1">
+                            <b>Total Base Stats: {total}</b>
+                        </div>
+                        {pokemonTeam.length >= 6 ? (
+                            <></>
+                        ) : (
+                            <button
+                                className="p-1 bg-gray-200 hover:bg-gray-300 rounded-lg h-100% w-auto font-semibold"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    setPokemonTeam([...pokemonTeam, pokemon]);
+                                }}
+                            >
+                                Add to team
+                            </button>
+                        )}
+                    </div>
+                )}
+            </div>
 
-            {/* Conditionally showing the words "Your Team:". We only want this
-            if the person already has a team*/}
             {pokemonTeam.length === 0 ? (
                 <></>
             ) : (

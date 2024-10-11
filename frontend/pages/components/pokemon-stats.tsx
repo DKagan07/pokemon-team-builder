@@ -2,7 +2,6 @@ import localFont from "next/font/local";
 import { Pokemon } from "@/lib/pokemon";
 import { BarColor, MakeWordReadable } from "@/lib/utils";
 import Image from "next/image";
-import { Dispatch, SetStateAction } from "react";
 
 // MAX_VALUE is the max value of a single base stat
 const MAX_VALUE = 255;
@@ -15,24 +14,14 @@ const geistSans = localFont({
 
 export default function PokemonStats({
     pokemon,
-    pokemonTeam,
-    addTeamAction,
+    statsObj,
 }: {
     pokemon: Pokemon;
-    pokemonTeam: Pokemon[];
-    addTeamAction: Dispatch<SetStateAction<Pokemon[]>>;
+    statsObj: { [key: string]: number };
 }) {
     if (pokemon === undefined || pokemon.name === "") {
         return <></>;
     }
-
-    // Get the stat total of a pokemon and fills out object of stats
-    const statsObj: { [key: string]: number } = {};
-    let total = 0;
-    pokemon.stats.map((stat) => {
-        statsObj[stat.stat.name] = stat.base_stat;
-        total += stat.base_stat;
-    });
 
     return (
         <div
@@ -90,22 +79,6 @@ export default function PokemonStats({
                         </div>
                     </div>
                 ))}
-            </div>
-            <div id="stat-footer">
-                <b>TOTAL: {total}</b>
-                {pokemonTeam.length >= 6 ? (
-                    <></>
-                ) : (
-                    <button
-                        className="py-1 px-1 my-1 mx-3 bg-gray-200 hover:bg-gray-300 rounded-lg h-100% w-auto font-semibold"
-                        onClick={(e) => {
-                            e.preventDefault();
-                            addTeamAction([...pokemonTeam, pokemon]);
-                        }}
-                    >
-                        Add to team
-                    </button>
-                )}
             </div>
         </div>
     );
