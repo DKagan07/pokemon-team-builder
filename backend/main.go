@@ -1,13 +1,18 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/jackc/pgx/v5"
+	_ "github.com/lib/pq"
 
 	pokemonapi "pokemon-team-builder/handlers"
 )
@@ -17,8 +22,26 @@ const (
 )
 
 func main() {
+	// Database setup
+	ctx := context.Background()
+	dbConnectionString := os.Getenv("DB_CONNECTION_STRING")
+	db, err := pgx.Connect(ctx, dbConnectionString)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
+		os.Exit(1)
+	}
+	defer db.Close(ctx)
+
+	// Ping to make sure it is working. It should, because we depend on db in
+	// compose.yaml
+	if err := db.Ping(ctx); err != nil {
+		fmt.Printf("error pinging db: %+v\n", err)
+		os.Exit(1)
+	}
+
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
+	pokemonApiHandler := pokemonapi.NewPokemonApiHandler(db)
 
 	// Basic CORS
 	r.Use(cors.Handler(cors.Options{
@@ -43,16 +66,14 @@ func main() {
 			}
 		})
 
-		r.Get("/{pokename}", pokemonapi.GetPokemonByName)
-		r.Get("/stat/{statname}", pokemonapi.GetStatByName)
-		r.Get("/nature/{naturename}", pokemonapi.GetNatureByName)
-		r.Get("/item/{itemname}", pokemonapi.GetItemByName)
-		r.Get("/move/{movename}", pokemonapi.GetMoveByName)
+		r.Get("/{pokename}", pokemonApiHandler.GetPokemonByName)
+		r.Get("/stat/{statname}", pokemonApiHandler.GetStatByName)
+		r.Get("/nature/{naturename}", pokemonApiHandler.GetNatureByName)
+		r.Get("/item/{itemname}", pokemonApiHandler.GetItemByName)
+		r.Get("/move/{movename}", pokemonApiHandler.GetMoveByName)
 	})
 
 	// Serve's up, man
 	fmt.Printf("Starting server on PORT: %d\n", PORT)
-	if err := http.ListenAndServe(fmt.Sprintf(":%d", PORT), r); err != nil {
-		panic("cannot ListenAndServe")
-	}
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", PORT), r))
 }

@@ -1,18 +1,22 @@
 package pokemonapi
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"pokemon-team-builder/types"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5"
+
+	"pokemon-team-builder/types"
 )
 
-const pokemonLevel = 50
-const pokemonApiV2 = "https://pokeapi.co/api/v2"
-
+const (
+	pokemonLevel = 50
+	pokemonApiV2 = "https://pokeapi.co/api/v2"
+)
 
 /*
 	Of Note: This is only for Gen7 and beyond
@@ -31,17 +35,64 @@ const pokemonApiV2 = "https://pokeapi.co/api/v2"
 	Per pokemon, you can only have 510 EVs
 */
 
-// TODO: Add caching
-// TODO: Perhaps add a database and auth so people can save their teams
+// PokemonApiHandler is a struct that will hold all our handlers, and contain
+// a DB connection from pgx
+type PokemonApiHandler struct {
+	Db *pgx.Conn
+}
 
-// GetPokemonByName fetches a types.Pokemon from the Pokemon API
-func GetPokemonByName(w http.ResponseWriter, r *http.Request) {
-	// get name from url
+func NewPokemonApiHandler(db *pgx.Conn) *PokemonApiHandler {
+	return &PokemonApiHandler{
+		Db: db,
+	}
+}
+
+// PokemonSQLResponse is an instance of the expected response we get from a SQL
+// query, since our DB schema only has 2 fields
+type PokemonSQLResponse struct {
+	Name     string
+	Response types.Pokemon
+}
+
+// GetPokemonByName fetches a types.Pokemon from the Pokemon API, or returns it
+// from database
+func (p *PokemonApiHandler) GetPokemonByName(w http.ResponseWriter, r *http.Request) {
 	pokename := chi.URLParam(r, "pokename")
-	fmt.Println("pokemon name: ", pokename)
 
+	// Query Db to see if we already have this pokemon "cached"
+	var pokemonSQL PokemonSQLResponse
+	err := p.Db.QueryRow(context.Background(), "SELECT * FROM pokemon WHERE name=$1;", pokename).
+		Scan(&pokemonSQL.Name, &pokemonSQL.Response)
+	if err != pgx.ErrNoRows && err != nil {
+		http.Error(
+			w,
+			fmt.Sprintf("error querying actual db: %v\n", err),
+			http.StatusInternalServerError,
+		)
+		fmt.Printf("error: %+v\n", err)
+		return
+	}
+
+	// If the poke is in the db, we can just send it
+	if pokemonSQL.Name != "" {
+		b, err := json.Marshal(pokemonSQL.Response)
+		if err != nil {
+			http.Error(w, "marshaling json", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Add("Content-Type", "application/json")
+		if _, err := w.Write(b); err != nil {
+			http.Error(w, "writing to response", http.StatusInternalServerError)
+			return
+		}
+
+		return
+	}
+
+	// If not in db, we get the info from the API, and we need to add it to the
+	// db
 	url := fmt.Sprintf("%s/pokemon/%s", pokemonApiV2, pokename)
-
 	resp, err := http.Get(url)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("getting pokemon from api: %v", err.Error()), http.StatusNotFound)
@@ -51,18 +102,41 @@ func GetPokemonByName(w http.ResponseWriter, r *http.Request) {
 
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("reading from response body: %v", err.Error()), http.StatusInternalServerError)
+		http.Error(
+			w,
+			fmt.Sprintf("reading from response body: %v", err.Error()),
+			http.StatusInternalServerError,
+		)
+		return
 	}
 
 	var pokemon types.Pokemon
-	json.Unmarshal(b, &pokemon)
+	if err = json.Unmarshal(b, &pokemon); err != nil {
+		http.Error(w, "unmarshal resp body into pokemon", http.StatusInternalServerError)
+	}
+
+	if _, err = p.Db.Exec(context.Background(), "INSERT INTO pokemon (name, response) VALUES ($1, $2);", pokemon.Name, pokemon); err != nil {
+		fmt.Printf("unable to insert into row: %+v\n", err)
+		http.Error(w, "inserting pokemon into db", http.StatusInternalServerError)
+	}
 
 	w.Header().Add("Content-Type", "application/json")
-	w.Write(b)
+	if _, err := w.Write(b); err != nil {
+		http.Error(w, "writing to response", http.StatusInternalServerError)
+		return
+	}
 }
 
-// GetStatByName fetches a types.Stat from the Pokemon API
-func GetStatByName(w http.ResponseWriter, r *http.Request) {
+// PokemonStatSQLResponse is an instance of the expected response we get from a
+// SQL query, since our DB schema only has 2 fields
+type PokemonStatSQLResponse struct {
+	Name     string
+	Response types.Stat
+}
+
+// GetStatByName fetches a types.Stat from the Pokemon API or returns it from
+// the database
+func (p *PokemonApiHandler) GetStatByName(w http.ResponseWriter, r *http.Request) {
 	// get stat out of URL
 	stat := chi.URLParam(r, "statname")
 
@@ -78,18 +152,35 @@ func GetStatByName(w http.ResponseWriter, r *http.Request) {
 
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("reading from response body: %v", err.Error()), http.StatusInternalServerError)
+		http.Error(
+			w,
+			fmt.Sprintf("reading from response body: %v", err.Error()),
+			http.StatusInternalServerError,
+		)
 	}
 
 	var stats types.Stat
-	json.Unmarshal(b, &stats)
+	if err = json.Unmarshal(b, &stats); err != nil {
+		http.Error(w, "unmarshal resp body into stat", http.StatusInternalServerError)
+	}
 
 	w.Header().Add("Content-Type", "application/json")
-	w.Write(b)
+	if _, err := w.Write(b); err != nil {
+		http.Error(w, "writing to response", http.StatusInternalServerError)
+		return
+	}
 }
 
-// GetNatureByName fetches a types.Nature from the Pokemon API
-func GetNatureByName(w http.ResponseWriter, r *http.Request) {
+// PokemonNatureSQLResponse is an instance of the expected response we get from
+// a SQL query, since our DB schema only has 2 fields
+type PokemonNatureSQLResponse struct {
+	Name     string
+	Response types.Nature
+}
+
+// GetNatureByName fetches a types.Nature from the Pokemon API or returns it
+// from the database
+func (p *PokemonApiHandler) GetNatureByName(w http.ResponseWriter, r *http.Request) {
 	nature := chi.URLParam(r, "naturename")
 
 	url := fmt.Sprintf("%s/nature/%s", pokemonApiV2, nature)
@@ -103,17 +194,33 @@ func GetNatureByName(w http.ResponseWriter, r *http.Request) {
 
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("reading from response body: %v", err.Error()), http.StatusInternalServerError)
+		http.Error(
+			w,
+			fmt.Sprintf("reading from response body: %v", err.Error()),
+			http.StatusInternalServerError,
+		)
 	}
 
 	var natureInfo types.Nature
-	json.Unmarshal(b, &natureInfo)
+	if err = json.Unmarshal(b, &natureInfo); err != nil {
+		http.Error(w, "unmarshal resp body into nature", http.StatusInternalServerError)
+	}
 
 	w.Header().Add("Content-Type", "application/json")
-	w.Write(b)
+	if _, err := w.Write(b); err != nil {
+		http.Error(w, "writing to response", http.StatusInternalServerError)
+		return
+	}
 }
 
-func GetItemByName(w http.ResponseWriter, r *http.Request) {
+// PokemonItemSQLResponse is an instance of the expected response we get from
+// a SQL query, since our DB schema only has 2 fields
+type PokemonItemSQLResponse struct {
+	Name     string
+	Response types.Item
+}
+
+func (p *PokemonApiHandler) GetItemByName(w http.ResponseWriter, r *http.Request) {
 	item := chi.URLParam(r, "itemname")
 
 	url := fmt.Sprintf("%s/item/%s", pokemonApiV2, item)
@@ -127,17 +234,35 @@ func GetItemByName(w http.ResponseWriter, r *http.Request) {
 
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("reading from response body: %v", err.Error()), http.StatusInternalServerError)
+		http.Error(
+			w,
+			fmt.Sprintf("reading from response body: %v", err.Error()),
+			http.StatusInternalServerError,
+		)
 	}
 
 	var itemInfo types.Item
-	json.Unmarshal(b, &itemInfo)
+	if err = json.Unmarshal(b, &itemInfo); err != nil {
+		http.Error(w, "unmarshal resp body into item", http.StatusInternalServerError)
+	}
 
 	w.Header().Add("Content-Type", "application/json")
-	w.Write(b)
+	if _, err := w.Write(b); err != nil {
+		http.Error(w, "writing to response", http.StatusInternalServerError)
+		return
+	}
 }
 
-func GetMoveByName(w http.ResponseWriter, r *http.Request) {
+// PokemonMoveSQLResponse is an instance of the expected response we get from
+// a SQL query, since our DB schema only has 2 fields
+type PokemonMoveSQLResponse struct {
+	Name     string
+	Response types.Move
+}
+
+// GetMoveByName fetches a types.Move from the Pokemon API, or returns it
+// from database
+func (p *PokemonApiHandler) GetMoveByName(w http.ResponseWriter, r *http.Request) {
 	move := chi.URLParam(r, "movename")
 
 	url := fmt.Sprintf("%s/move/%s", pokemonApiV2, move)
@@ -151,12 +276,21 @@ func GetMoveByName(w http.ResponseWriter, r *http.Request) {
 
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("reading from response body: %v", err.Error()), http.StatusInternalServerError)
+		http.Error(
+			w,
+			fmt.Sprintf("reading from response body: %v", err.Error()),
+			http.StatusInternalServerError,
+		)
 	}
 
 	var moveInfo types.Move
-	json.Unmarshal(b, &moveInfo)
+	if err = json.Unmarshal(b, &moveInfo); err != nil {
+		http.Error(w, "unmarshal resp body into move", http.StatusInternalServerError)
+	}
 
 	w.Header().Add("Content-Type", "application/json")
-	w.Write(b)
+	if _, err := w.Write(b); err != nil {
+		http.Error(w, "writing to response", http.StatusInternalServerError)
+		return
+	}
 }
