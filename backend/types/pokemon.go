@@ -274,7 +274,7 @@ type Pokemon struct {
 }
 
 // Stat is the description of a specific Pokemon Stat (eg. special-attack) from
-// the Pokemon API. 
+// the Pokemon API.
 type Stat struct {
 	ID             int    `json:"id"`
 	Name           string `json:"name"`
@@ -366,9 +366,9 @@ type Nature struct {
 	} `json:"names"`
 }
 
-// Item describes the information from the Pokemon API about an Item 
+// Item describes the information from the Pokemon API about an Item
 // (eg. flame-orb)
-type Item struct{
+type Item struct {
 	ID          int    `json:"id"`
 	Name        string `json:"name"`
 	Cost        int    `json:"cost"`

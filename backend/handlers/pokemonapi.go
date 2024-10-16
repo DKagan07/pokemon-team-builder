@@ -58,18 +58,15 @@ type PokemonSQLResponse struct {
 // from database
 func (p *PokemonApiHandler) GetPokemonByName(w http.ResponseWriter, r *http.Request) {
 	pokename := chi.URLParam(r, "pokename")
+	fmt.Println("pokename: ", pokename)
 
 	// Query Db to see if we already have this pokemon "cached"
 	var pokemonSQL PokemonSQLResponse
 	err := p.Db.QueryRow(context.Background(), "SELECT * FROM pokemon WHERE name=$1;", pokename).
 		Scan(&pokemonSQL.Name, &pokemonSQL.Response)
 	if err != pgx.ErrNoRows && err != nil {
-		http.Error(
-			w,
-			fmt.Sprintf("error querying actual db: %v\n", err),
-			http.StatusInternalServerError,
-		)
-		fmt.Printf("error: %+v\n", err)
+		fmt.Printf("error querying for first check db: %+v\n", err)
+		http.Error(w, fmt.Sprintf("error querying db: %v\n", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -86,9 +83,10 @@ func (p *PokemonApiHandler) GetPokemonByName(w http.ResponseWriter, r *http.Requ
 			http.Error(w, "writing to response", http.StatusInternalServerError)
 			return
 		}
-
 		return
 	}
+
+	fmt.Println("pokemon not in db")
 
 	// If not in db, we get the info from the API, and we need to add it to the
 	// db
@@ -116,7 +114,6 @@ func (p *PokemonApiHandler) GetPokemonByName(w http.ResponseWriter, r *http.Requ
 	}
 
 	if _, err = p.Db.Exec(context.Background(), "INSERT INTO pokemon (name, response) VALUES ($1, $2);", pokemon.Name, pokemon); err != nil {
-		fmt.Printf("unable to insert into row: %+v\n", err)
 		http.Error(w, "inserting pokemon into db", http.StatusInternalServerError)
 	}
 
@@ -136,6 +133,8 @@ type PokemonStatSQLResponse struct {
 
 // GetStatByName fetches a types.Stat from the Pokemon API or returns it from
 // the database
+// TODO: Implement database integration in this -- still hasn't been implemented
+// in the frontned
 func (p *PokemonApiHandler) GetStatByName(w http.ResponseWriter, r *http.Request) {
 	// get stat out of URL
 	stat := chi.URLParam(r, "statname")
@@ -180,6 +179,8 @@ type PokemonNatureSQLResponse struct {
 
 // GetNatureByName fetches a types.Nature from the Pokemon API or returns it
 // from the database
+// TODO: Implement database integration in this -- still hasn't been implemented
+// in the frontned
 func (p *PokemonApiHandler) GetNatureByName(w http.ResponseWriter, r *http.Request) {
 	nature := chi.URLParam(r, "naturename")
 
@@ -220,6 +221,8 @@ type PokemonItemSQLResponse struct {
 	Response types.Item
 }
 
+// TODO: Implement database integration in this -- still hasn't been implemented
+// in the frontned
 func (p *PokemonApiHandler) GetItemByName(w http.ResponseWriter, r *http.Request) {
 	item := chi.URLParam(r, "itemname")
 
@@ -265,8 +268,32 @@ type PokemonMoveSQLResponse struct {
 func (p *PokemonApiHandler) GetMoveByName(w http.ResponseWriter, r *http.Request) {
 	move := chi.URLParam(r, "movename")
 
-	url := fmt.Sprintf("%s/move/%s", pokemonApiV2, move)
+	// Check database first. If it's there, we return that
+	var pokemonSQLMove PokemonMoveSQLResponse
+	err := p.Db.QueryRow(context.Background(), "SELECT * FROM pokemonMove WHERE name=$1;", move).
+		Scan(&pokemonSQLMove.Name, &pokemonSQLMove.Response)
+	if err != pgx.ErrNoRows && err != nil {
+		http.Error(w, fmt.Sprintf("error querying db: %v\n", err), http.StatusInternalServerError)
+		return
+	}
 
+	if pokemonSQLMove.Name != "" {
+		b, err := json.Marshal(pokemonSQLMove.Response)
+		if err != nil {
+			http.Error(w, "marshaling json", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Add("Content-Type", "application/json")
+		if _, err := w.Write(b); err != nil {
+			http.Error(w, "writing to response", http.StatusInternalServerError)
+			return
+		}
+		return
+	}
+
+	// Not in database, we issue the API call
+	url := fmt.Sprintf("%s/move/%s", pokemonApiV2, move)
 	resp, err := http.Get(url)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("getting move from api: %v", err.Error()), http.StatusNotFound)
@@ -286,6 +313,10 @@ func (p *PokemonApiHandler) GetMoveByName(w http.ResponseWriter, r *http.Request
 	var moveInfo types.Move
 	if err = json.Unmarshal(b, &moveInfo); err != nil {
 		http.Error(w, "unmarshal resp body into move", http.StatusInternalServerError)
+	}
+
+	if _, err = p.Db.Exec(context.Background(), "INSERT INTO pokemonMove (name, response) VALUES ($1, $2);", moveInfo.Name, moveInfo); err != nil {
+		http.Error(w, fmt.Sprintf("inserting into db: %v", err), http.StatusInternalServerError)
 	}
 
 	w.Header().Add("Content-Type", "application/json")
