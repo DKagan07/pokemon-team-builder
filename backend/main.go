@@ -14,7 +14,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	_ "github.com/lib/pq"
 
-	pokemonapi "pokemon-team-builder/handlers"
+	handler "pokemon-team-builder/handlers"
 )
 
 const (
@@ -41,7 +41,10 @@ func main() {
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
-	pokemonApiHandler := pokemonapi.NewPokemonApiHandler(db)
+
+	// Setup handlers
+	pokemonApiHandler := handler.NewPokemonApiHandler(db)
+	usersHandler := handler.NewUsersHandler(db)
 
 	// Basic CORS
 	r.Use(cors.Handler(cors.Options{
@@ -64,6 +67,10 @@ func main() {
 			if _, err := w.Write(res); err != nil {
 				http.Error(w, http.StatusText(404), 404)
 			}
+		})
+
+		r.Route("/users", func(r chi.Router) {
+			r.Post("/login", usersHandler.SignUpUser)
 		})
 
 		r.Get("/{pokename}", pokemonApiHandler.GetPokemonByName)

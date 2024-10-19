@@ -1,4 +1,4 @@
-package pokemonapi
+package handlers
 
 import (
 	"context"

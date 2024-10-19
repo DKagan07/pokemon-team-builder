@@ -4,21 +4,28 @@ import {
     Dispatch,
     ReactNode,
     SetStateAction,
-    useContext,
     useState,
 } from "react";
 
-interface DataContextType {
-    pokemonState: Pokemon;
-    setPokemonState: Dispatch<SetStateAction<Pokemon>>;
+export type PokemonState = {
+    Pokemon: Pokemon;
+    PokemonTeam: Pokemon[];
 }
 
-const DataContext = createContext<DataContextType | undefined>(undefined);
+interface DataContextType {
+    pokemonState: PokemonState;
+    setPokemonState: Dispatch<SetStateAction<PokemonState>>;
+}
+
+const DataContext = createContext<DataContextType>({
+    pokemonState: { Pokemon: InitialPokeSetter, PokemonTeam: [] },
+    setPokemonState: () => { }
+});
 
 export const DataProvider: React.FC<{ children: ReactNode }> = ({
     children,
 }) => {
-    const [pokemonState, setPokemonState] = useState<Pokemon>(InitialPokeSetter);
+    const [pokemonState, setPokemonState] = useState<PokemonState>({ Pokemon: InitialPokeSetter, PokemonTeam: [] });
 
     return (
         <DataContext.Provider value={{ pokemonState, setPokemonState }}>
@@ -27,13 +34,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({
     );
 };
 
-export const usePokemonState = () => {
-    const context = useContext(DataContext);
-    if (!context) {
-        throw new Error("useData must be used within the DataProvider");
-    }
 
-    return context;
-};
-
+export { DataContext }
 export default DataProvider;

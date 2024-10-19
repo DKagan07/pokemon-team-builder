@@ -1,26 +1,23 @@
 import { PkmnMove, /*TestMove */ } from "@/lib/pkmnMoves";
 import { MakeWordReadable } from "@/lib/utils";
 import MoveCard from "@/pages/components/pokemon-move-card";
-import { usePokemonState } from "@/pages/context/dataContext";
+import { DataContext } from "@/pages/context/dataContext";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 
 export default function Home() {
-    const { pokemonState } = usePokemonState();
-
-    // NOTE: This is just to test without hitting the API
-    // const [selectedMoves, setSelectedMoves] = useState<PkmnMove[]>([TestMove]);
+    const { pokemonState } = useContext(DataContext);
 
     const [selectedMoves, setSelectedMoves] = useState<PkmnMove[]>([]);
     const [selectedMoveNames, setSelectedMoveNames] = useState<string[]>([])
-    const moves = pokemonState.moves;
+    const moves = pokemonState.Pokemon.moves;
 
     useEffect(() => {
         console.log({ selectedMoves })
     }, [selectedMoves])
 
-    if (pokemonState === undefined || pokemonState.name === "") {
+    if (pokemonState === undefined || pokemonState.Pokemon.name === "") {
         return <></>;
     }
 
@@ -61,7 +58,7 @@ export default function Home() {
             </div>
             <div className="w-[100px] h-[100px] mx-3">
                 <Image
-                    src={pokemonState.sprites.front_default}
+                    src={pokemonState.Pokemon.sprites.front_default}
                     alt="pokemon-sprite"
                     width={100}
                     height={100}
@@ -69,7 +66,7 @@ export default function Home() {
                 />
             </div>
             <h1 className="py-2">
-                Pick {MakeWordReadable(pokemonState.name)} Moveset:
+                Pick {MakeWordReadable(pokemonState.Pokemon.name)} Moveset:
             </h1>
             <select
                 onChange={async (e) => {

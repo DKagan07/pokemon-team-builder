@@ -2,14 +2,17 @@ import { Pokemon } from "@/lib/pokemon";
 import Image from "next/image";
 import Link from "next/link";
 import { Dispatch, SetStateAction } from "react";
+import { PokemonState } from "../context/dataContext";
 
 function removeFromTeam(
     mon: Pokemon,
     team: Pokemon[],
     setTeam: Dispatch<SetStateAction<Pokemon[]>>,
+    setState: Dispatch<SetStateAction<PokemonState>>
 ): void {
     const newTeam = team.filter((poke) => poke !== mon);
     setTeam(newTeam);
+    setState({ Pokemon: mon, PokemonTeam: newTeam })
 }
 
 export default function MiniCard({
@@ -17,11 +20,13 @@ export default function MiniCard({
     team,
     setTeam,
     setData,
+    item,
 }: {
     pokemon: Pokemon;
     team: Pokemon[];
     setTeam: Dispatch<SetStateAction<Pokemon[]>>;
-    setData: Dispatch<SetStateAction<Pokemon>>;
+    setData: Dispatch<SetStateAction<PokemonState>>;
+    item: number;
 }) {
     if (pokemon === undefined || pokemon.name === "") {
         return <></>;
@@ -30,6 +35,7 @@ export default function MiniCard({
     return (
         <div>
             <div className="flex w-auto m-3 ">
+                <p>{item}</p>
                 <div className="w-[100px] h-[100px] mx-3">
                     <Image
                         src={pokemon.sprites.front_default}
@@ -57,7 +63,7 @@ export default function MiniCard({
                 <div className="px-4 align-middle">
                     <button
                         onClick={() => {
-                            removeFromTeam(pokemon, team, setTeam);
+                            removeFromTeam(pokemon, team, setTeam, setData);
                         }}
                         className="h-[20px] w-[20px]"
                     >
@@ -75,7 +81,7 @@ export default function MiniCard({
                     <button
                         className="border border-black rounded-md w-auto px-1"
                         onClick={() => {
-                            setData(pokemon);
+                            setData({ Pokemon: pokemon, PokemonTeam: team });
                         }}
                     >
                         See moves
