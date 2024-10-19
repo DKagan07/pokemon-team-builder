@@ -3,7 +3,7 @@ import PokemonStats from "./components/pokemon-stats";
 import { InitialPokeSetter, Pokemon, /* TestPkmn */ } from "@/lib/pokemon";
 import MiniCard from "./components/pokemon-mini-card";
 import { DataContext } from "./context/dataContext";
-import { TopBar } from "./components/topbar";
+import TopBar from "./components/topbar";
 
 export default function Home() {
     const [pokemonName, setPokemonName] = useState("");

@@ -70,7 +70,8 @@ func main() {
 		})
 
 		r.Route("/users", func(r chi.Router) {
-			r.Post("/login", usersHandler.SignUpUser)
+			r.Post("/signup", usersHandler.SignUpUser)
+			r.Post("/login", usersHandler.LoginUser)
 		})
 
 		r.Get("/{pokename}", pokemonApiHandler.GetPokemonByName)
