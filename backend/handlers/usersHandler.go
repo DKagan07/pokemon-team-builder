@@ -3,11 +3,15 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
+	"os"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"golang.org/x/crypto/bcrypt"
@@ -36,9 +40,10 @@ type queryUserTable struct {
 	Password  string
 }
 
-// TODO: also look into JWT and session tokens
+// TODO: also look into JWT and session tokens/cookies
 
 func (u *UsersHandler) SignUpUser(w http.ResponseWriter, r *http.Request) {
+	log.Println("in signup user")
 	defer r.Body.Close()
 	b, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -52,6 +57,9 @@ func (u *UsersHandler) SignUpUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	fmt.Printf("got user: %+v\n", loginInfo)
+	log.Printf("got user: %+v\n", loginInfo)
 
 	var queryUser queryUserTable
 	err = u.Db.QueryRow(context.Background(), "SELECT * FROM users WHERE name=$1", loginInfo.Username).
@@ -99,7 +107,36 @@ func (u *UsersHandler) SignUpUser(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("error inserting user into db: %+v\n", err)
 	}
 
+	fmt.Println("creating jwt")
+	log.Println("creating jwt")
+
+	tokenString, err := createJWT(loginInfo.Username)
+	if err != nil {
+		fmt.Printf("error with creating JWT: %+v\n", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	fmt.Printf("jwt token string: %+v\n", tokenString)
+	log.Printf("jwt token string: %+v\n", tokenString)
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "token",
+		Value:    tokenString,
+		Path:     "/",
+		SameSite: http.SameSiteLaxMode,
+
+		// MaxAge is 7 days, in seconds
+		MaxAge: 604800,
+
+		// Expires is also going to be 7 days
+		Expires: time.Now().Add(time.Hour * 24 * 7),
+	})
+
+	fmt.Println("after setting cookie")
+	log.Println("after setting cookie")
+
 	// return something here, like a 200
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
 	w.WriteHeader(http.StatusCreated)
 }
 
@@ -135,7 +172,28 @@ func (u *UsersHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	tokenString, err := createJWT(loginInfo.Username)
+	if err != nil {
+		fmt.Printf("error with creating JWT: %+v\n", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "token",
+		Value:    tokenString,
+		Path:     "/",
+		SameSite: http.SameSiteLaxMode,
+
+		// MaxAge is 7 days, in seconds
+		MaxAge: 604800,
+
+		// Expires is also going to be 7 days
+		Expires: time.Now().Add(time.Hour * 24 * 7),
+	})
+
 	w.WriteHeader(http.StatusOK)
+
+	// after successful login, we should redirect to "/" on the frontend
 }
 
 // hashPassword uses the bcrypt package to has a password with the default cost
@@ -154,4 +212,31 @@ func hashPassword(pass string) (string, error) {
 func comparePassword(incPassPlainText, passFromDB string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(passFromDB), []byte(incPassPlainText))
 	return err == nil
+}
+
+// TODO: LOGOUT should also have the ability to get the cookie and immediately
+// make the expiry time now
+
+// createJWT creates a new JWT.
+func createJWT(username string) (string, error) {
+	key := os.Getenv("SUPER_SECRET_JWT_SIGNING_KEY")
+	if key == "" {
+		fmt.Println("super secret jwt signing key is not set")
+		return "", errors.New("super secret jwt signing key is not set")
+	}
+
+	expiryTime := time.Now().Add(time.Hour * 24 * 7).Unix()
+	mappedClaims := jwt.MapClaims{
+		"username": username,
+		// expiry time is 14 days from now
+		"expiry": expiryTime,
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, mappedClaims)
+
+	tokenString, err := token.SignedString([]byte(key))
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
 }

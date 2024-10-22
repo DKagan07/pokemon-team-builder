@@ -1,6 +1,21 @@
+import { useRouter } from "next/router"
 import { useState } from "react"
 
+// getJWTFromCookie retreives the JWT token string from the cookie. If the token
+// or cookie is not present, then it will return an empty string
+export function getJWTFromCookie(cookie: string): string {
+    const jwtToken = cookie.split("; ")
+        .find(cook => cook.startsWith("token="))
+        ?.split("=")[1]
+    if (jwtToken === undefined) {
+        return ""
+    }
+    return jwtToken
+}
+
 export default function Home() {
+    const router = useRouter()
+
     const [username, setUsername] = useState<string>("")
     const [password, setPassword] = useState<string>("")
     const [validatedPw, setValidatedPw] = useState<string>("")
@@ -11,10 +26,15 @@ export default function Home() {
     const special = /[!@#$%^&*(),.?":{}|<>]/;
     const number = /\d/;
 
+    // validatePw is used for easy checking for button disable-ness
     function validatePw(password: string, validatedPw: string): boolean {
         return password === validatedPw && password !== "" && validatedPw !== ""
     }
 
+    // validateCreds validates:
+    // 1. the username is populated
+    // 2. the password matches the validated password
+    // 3. it is <40 characters (for hashing purposes)
     function validateCreds(username: string, password: string, validatedPw: string) {
         if (username === "") {
             throw new Error("username needs to be filled out")
@@ -28,7 +48,6 @@ export default function Home() {
             throw new Error("password too long")
         }
 
-        console.log({ password })
         if (lower.test(password) && upper.test(password) && special.test(password) && number.test(password) && password.length > 7) {
             console.log("yes, password works")
         } else {
@@ -36,33 +55,45 @@ export default function Home() {
         }
     }
 
+    // submitSignUpCreds validates the credentials and issues a POST request to
+    // the backend to store the information in the db
     async function submitSignUpCreds(username: string, password: string, validatedPw: string) {
         // need to validate username and pw
         validateCreds(username, password, validatedPw)
 
-        const url = `http://localhost:3001/login`
+        const url = `http://localhost:3001/users/signup`
+        console.log("url the submit signup creds request is going: ", url)
         const response = await fetch(url, {
             method: "POST",
-            body: JSON.stringify({ username: username, password: password })
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password })
         })
+
+        // Do I need this?
+        const data = await response.json()
+        console.log({ data })
 
         // If the response of this call is 200s, we know it's a successful
         // signup, and we can store the information somewhere, and redirect to
         // the homepage
-
         if (response.status < 299) {
+            const jwtToken = getJWTFromCookie(document.cookie)
+            console.log({ jwtToken })
+            if (jwtToken === "") {
+                return
+            }
+            router.push("/")
         }
 
-        const data = await response.json()
-        console.log({ data })
     }
 
     return (
         <div>
             <div className="flex justify-center h-full">
-                <form id="login-form" className="flex flex-col border border-black m-4 pr-2 rounded-lg justify-items-center align-middle w-[50%]">
+                <form id="signup-form" className="flex flex-col border border-black m-4 pr-2 rounded-lg justify-items-center align-middle w-[50%]">
                     <div className="flex justify-center align-middle h-[50px]">
-                        <p className="self-center w-auto h-auto font-semibold text-xl">Login</p>
+                        <p className="self-center w-auto h-auto font-semibold text-xl">Sign Up</p>
                     </div>
                     <div className="p-2">
                         <label htmlFor="username" className="w-full indent-2">Username</label>
@@ -127,6 +158,7 @@ export default function Home() {
                             }}
                             className="bg-slate-300 hover:bg-slate-400 disabled:bg-slate-200 rounded-lg h-100% font-semibold w-full py-1 disabled:hover:cursor-not-allowed"
                             disabled={!validatePw(password, validatedPw)}
+
                         >
                             Sign Up
                         </button>

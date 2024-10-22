@@ -4,6 +4,7 @@ import { InitialPokeSetter, Pokemon, /* TestPkmn */ } from "@/lib/pokemon";
 import MiniCard from "./components/pokemon-mini-card";
 import { DataContext } from "./context/dataContext";
 import TopBar from "./components/topbar";
+import { getJWTFromCookie } from "./signup";
 
 export default function Home() {
     const [pokemonName, setPokemonName] = useState("");
@@ -11,7 +12,8 @@ export default function Home() {
     const [pokemonTeam, setPokemonTeam] = useState<Pokemon[]>([]);
     const { pokemonState, setPokemonState } = useContext(DataContext);
 
-    const fetchMessage = async (name: string) => {
+    // fetchPokemon gets the pokemon information 
+    const fetchPokemon = async (name: string) => {
         // For names that have a space, ex. Iron Hands, we need to change it to:
         // "iron-hands"
         name = name.trim().replace(" ", "-").toLowerCase();
@@ -27,6 +29,19 @@ export default function Home() {
     };
 
 
+    // We get the token here, if the token is present, then we know someone  is
+    // logged in and we should fetch the information and populate it
+    const token = getJWTFromCookie(document.cookie)
+    console.log({ token })
+    if (token !== "") {
+        console.log("user is logged in, populate data")
+        // TODO: Populate the data
+        // (probably needs a new postgres table named teams)
+    } else {
+        console.log("no cookie, no user logged in")
+    }
+
+
     const statsObj: { [key: string]: number } = {};
     let total = 0;
     pokemon.stats.map((stat) => {
@@ -34,9 +49,6 @@ export default function Home() {
         total += stat.base_stat;
     });
 
-    console.log("pokemon state Pokemon at home page: ", pokemonState.Pokemon)
-    console.log("pokemon state team at home page: ", pokemonState.PokemonTeam)
-    console.log("pokemon team at home page: ", pokemonTeam)
     return (
         <div className="flex flex-col p-2">
             <TopBar />
@@ -53,7 +65,7 @@ export default function Home() {
                 <button
                     onClick={(e) => {
                         e.preventDefault();
-                        fetchMessage(pokemonName);
+                        fetchPokemon(pokemonName);
                     }}
                     className="py-1 px-3 bg-gray-200 hover:bg-gray-300 rounded-lg h-100% font-semibold"
                 >
