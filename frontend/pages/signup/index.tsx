@@ -1,18 +1,6 @@
 import { useRouter } from "next/router"
 import { useState } from "react"
 
-// getJWTFromCookie retreives the JWT token string from the cookie. If the token
-// or cookie is not present, then it will return an empty string
-export function getJWTFromCookie(cookie: string): string {
-    const jwtToken = cookie.split("; ")
-        .find(cook => cook.startsWith("token="))
-        ?.split("=")[1]
-    if (jwtToken === undefined) {
-        return ""
-    }
-    return jwtToken
-}
-
 export default function Home() {
     const router = useRouter()
 

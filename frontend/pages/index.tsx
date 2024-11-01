@@ -4,7 +4,6 @@ import { InitialPokeSetter, Pokemon, /* TestPkmn */ } from "@/lib/pokemon";
 import MiniCard from "./components/pokemon-mini-card";
 import { DataContext } from "./context/dataContext";
 import TopBar from "./components/topbar";
-// import { getJWTFromCookie } from "./signup";
 import { GetServerSideProps, GetServerSidePropsContext } from "next";
 import { ParsedUrlQuery } from "querystring";
 
