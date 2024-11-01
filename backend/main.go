@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"database/sql"
+	"embed"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -13,13 +15,18 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/jackc/pgx/v5"
 	_ "github.com/lib/pq"
+	"github.com/pressly/goose/v3"
 
 	handler "pokemon-team-builder/handlers"
 )
 
 const (
-	PORT = 3001
+	PORT             = 3001
+	PathToMigrations = "sql/schema"
 )
+
+//go:embed sql/schema/*.sql
+var embedMigrations embed.FS
 
 func main() {
 	// Database setup
@@ -31,6 +38,26 @@ func main() {
 		os.Exit(1)
 	}
 	defer db.Close(ctx)
+
+	/* Migration setup
+	For some reason, using the pgx/v5 package, there's no way to get a
+	*sql.DB, so we create one with the default package. For all queries, we
+	will still use the pgx library though
+
+	NOTE: On starting this migration with a fresh DB, there will be an
+	error that states "goose_db_version does not exist at character 36".
+	Despite this error, the migration still works.
+	*/
+	sqldb, _ := sql.Open("postgres", dbConnectionString)
+
+	goose.SetBaseFS(embedMigrations)
+	if err = goose.SetDialect("postgres"); err != nil {
+		fmt.Printf("failed to set dialect to postgres: %+v\n", err)
+	}
+
+	if err = goose.Up(sqldb, PathToMigrations); err != nil {
+		fmt.Printf("failed goose up: %+v\n", err)
+	}
 
 	// Ping to make sure it is working. It should, because we depend on db in
 	// compose.yaml
