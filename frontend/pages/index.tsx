@@ -4,12 +4,21 @@ import { InitialPokeSetter, Pokemon, /* TestPkmn */ } from "@/lib/pokemon";
 import MiniCard from "./components/pokemon-mini-card";
 import { DataContext } from "./context/dataContext";
 import TopBar from "./components/topbar";
-import { getJWTFromCookie } from "./signup";
+// import { getJWTFromCookie } from "./signup";
+import { GetServerSideProps, GetServerSidePropsContext } from "next";
+import { ParsedUrlQuery } from "querystring";
 
-export default function Home() {
+interface HomeProps {
+    pokemonTeamFromServer: Pokemon[]
+}
+
+export default function Home(props: HomeProps) {
+    const { pokemonTeamFromServer } = props
+    console.log({ pokemonTeamFromServer })
+
     const [pokemonName, setPokemonName] = useState("");
     const [pokemon, setPokemon] = useState<Pokemon>(InitialPokeSetter);
-    const [pokemonTeam, setPokemonTeam] = useState<Pokemon[]>([]);
+    const [pokemonTeam, setPokemonTeam] = useState<Pokemon[]>(pokemonTeamFromServer);
     const { pokemonState, setPokemonState } = useContext(DataContext);
 
     // fetchPokemon gets the pokemon information 
@@ -27,20 +36,6 @@ export default function Home() {
         setPokemon(data);
         setPokemonState({ Pokemon: data, PokemonTeam: pokemonTeam })
     };
-
-
-    // We get the token here, if the token is present, then we know someone  is
-    // logged in and we should fetch the information and populate it
-    const token = getJWTFromCookie(document.cookie)
-    console.log({ token })
-    if (token !== "") {
-        console.log("user is logged in, populate data")
-        // TODO: Populate the data
-        // (probably needs a new postgres table named teams)
-    } else {
-        console.log("no cookie, no user logged in")
-    }
-
 
     const statsObj: { [key: string]: number } = {};
     let total = 0;
@@ -142,5 +137,39 @@ export default function Home() {
             }
         </div >
     );
+}
+
+// We get the token here, if the token is present, then we know someone  is
+// logged in and we should fetch the information and populate it
+//
+// The idea of this getServerSideProps is just to get the cookies. If the cookie
+// is present, then we know the user has logged in and we should somewhat
+// populate the pokemon teams
+//
+// TODO: Setup such that if the cookie is present, we can have some setting of
+// the state in the main Home(). 
+export const getServerSideProps: GetServerSideProps<ParsedUrlQuery> = async (context: GetServerSidePropsContext) => {
+    const { req } = context
+    const cookie = req.cookies
+    console.log({ cookie })
+    if (!cookie) {
+        return {
+            props: {
+                message: "no cookie present"
+            }
+        }
+    }
+
+    const token = cookie["token"]
+    console.log({ token })
+
+
+    // This will eventually get filled in with the teams, with the
+    // implementation of the teams endpoint
+    return {
+        props: {
+            pokemonTeamFromServer: [],
+        }
+    }
 }
 

@@ -63,26 +63,29 @@ export default function Home() {
 
         const url = `http://localhost:3001/users/signup`
         console.log("url the submit signup creds request is going: ", url)
-        const response = await fetch(url, {
+
+        const postOptions: RequestInit = {
             method: "POST",
-            credentials: "include",
+            // credentials: "include",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username, password })
-        })
+        }
+
+        const response = await fetch(url, postOptions)
+
 
         // Do I need this?
-        const data = await response.json()
-        console.log({ data })
+        // const data = await response.json()
+        // console.log({ data })
 
         // If the response of this call is 200s, we know it's a successful
         // signup, and we can store the information somewhere, and redirect to
         // the homepage
+        // The getServerSideProps on the homepage should pick up the cookie and
+        // set up the team that way
         if (response.status < 299) {
-            const jwtToken = getJWTFromCookie(document.cookie)
-            console.log({ jwtToken })
-            if (jwtToken === "") {
-                return
-            }
+            console.log("good response")
+
             router.push("/")
         }
 

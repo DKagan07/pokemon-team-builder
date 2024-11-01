@@ -58,7 +58,6 @@ func (u *UsersHandler) SignUpUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Printf("got user: %+v\n", loginInfo)
 	log.Printf("got user: %+v\n", loginInfo)
 
 	var queryUser queryUserTable
@@ -107,7 +106,6 @@ func (u *UsersHandler) SignUpUser(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("error inserting user into db: %+v\n", err)
 	}
 
-	fmt.Println("creating jwt")
 	log.Println("creating jwt")
 
 	tokenString, err := createJWT(loginInfo.Username)
@@ -132,7 +130,6 @@ func (u *UsersHandler) SignUpUser(w http.ResponseWriter, r *http.Request) {
 		Expires: time.Now().Add(time.Hour * 24 * 7),
 	})
 
-	fmt.Println("after setting cookie")
 	log.Println("after setting cookie")
 
 	// return something here, like a 200
