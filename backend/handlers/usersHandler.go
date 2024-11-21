@@ -190,7 +190,8 @@ func (u *UsersHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 
-	// after successful login, we should redirect to "/" on the frontend
+	// after successful login, we should redirect to "/" on the frontend, which
+	// we do
 }
 
 // hashPassword uses the bcrypt package to has a password with the default cost

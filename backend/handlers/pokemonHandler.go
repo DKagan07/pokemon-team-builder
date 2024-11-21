@@ -325,3 +325,6 @@ func (p *PokemonApiHandler) GetMoveByName(w http.ResponseWriter, r *http.Request
 		return
 	}
 }
+
+func (p *PokemonApiHandler) GetPokemonTeam(w http.ResponseWriter, r *http.Request) {
+}

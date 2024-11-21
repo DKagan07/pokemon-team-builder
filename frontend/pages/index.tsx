@@ -11,6 +11,12 @@ interface HomeProps {
     pokemonTeamFromServer: Pokemon[]
 }
 
+// NOTE: All backend calls that require a user to be logged in should:
+// 1. Be checked first to see if a user is logged in, based on presence of
+//      cookie
+// 2. The auth token from the cookie should be prefaced by "Bearer " (with the 
+//      space) so our backend can verify it
+
 export default function Home(props: HomeProps) {
     const { pokemonTeamFromServer } = props
     console.log({ pokemonTeamFromServer })

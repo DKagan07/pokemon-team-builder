@@ -39,16 +39,17 @@ func main() {
 	}
 	defer db.Close(ctx)
 
-	/* Migration setup
-	For some reason, using the pgx/v5 package, there's no way to get a
-	*sql.DB, so we create one with the default package. For all queries, we
-	will still use the pgx library though
-
-	NOTE: On starting this migration with a fresh DB, there will be an
-	error that states "goose_db_version does not exist at character 36".
-	Despite this error, the migration still works.
-	*/
+	// Migration setup
+	// For some reason, using the pgx/v5 package, there's no way to get a
+	// *sql.DB, so we create one with the default package. For all queries, we
+	// will still use the pgx library though
+	//
+	// NOTE: On starting this migration with a fresh DB, there will be an
+	// error that states "goose_db_version does not exist at character 36".
+	// Despite this error, the migration still works.
+	//
 	sqldb, _ := sql.Open("postgres", dbConnectionString)
+	defer sqldb.Close()
 
 	goose.SetBaseFS(embedMigrations)
 	if err = goose.SetDialect("postgres"); err != nil {
@@ -72,6 +73,7 @@ func main() {
 	// Setup handlers
 	pokemonApiHandler := handler.NewPokemonApiHandler(db)
 	usersHandler := handler.NewUsersHandler(db)
+	authHandler := handler.NewAuthHandler()
 
 	// Basic CORS
 	r.Use(cors.Handler(cors.Options{
@@ -85,7 +87,9 @@ func main() {
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
 
+	// Routes
 	r.Route("/", func(r chi.Router) {
+		// A test route
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			res, err := json.Marshal("Hello, Linda!")
 			if err != nil {
@@ -96,16 +100,23 @@ func main() {
 			}
 		})
 
+		// Users
 		r.Route("/users", func(r chi.Router) {
 			r.Post("/signup", usersHandler.SignUpUser)
 			r.Post("/login", usersHandler.LoginUser)
 		})
 
+		// Pokemon
 		r.Get("/{pokename}", pokemonApiHandler.GetPokemonByName)
 		r.Get("/stat/{statname}", pokemonApiHandler.GetStatByName)
 		r.Get("/nature/{naturename}", pokemonApiHandler.GetNatureByName)
 		r.Get("/item/{itemname}", pokemonApiHandler.GetItemByName)
 		r.Get("/move/{movename}", pokemonApiHandler.GetMoveByName)
+
+		// Teams
+		// TODO: will need a GET and POST, POST to save the team, GET to get
+		// the team
+		r.Use(authHandler.EnsureLoggedIn)
 	})
 
 	// Serve's up, man
