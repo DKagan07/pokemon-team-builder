@@ -30,7 +30,12 @@ export default function Home() {
         // We need to string parse here for moves with a space in them. Ex. We
         // want to change Aerial Ace to aerial-ace to hit the right endpoint
         moveName = moveName.trim().replace(" ", "-").toLowerCase();
-        const response = await fetch(`http://localhost:3001/move/${moveName}`);
+
+        const getOptions: RequestInit = {
+            method: "GET",
+            credentials: "include",
+        }
+        const response = await fetch(`http://localhost:3001/move/${moveName}`, getOptions);
 
         // This is just for local, FE-only development:
         // const response = await fetch(`https://pokeapi.co/api/v2/move/${moveName}/`);

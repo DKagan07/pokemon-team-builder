@@ -34,8 +34,12 @@ export default function Home(props: HomeProps) {
         console.log({ name });
         // const response = await fetch(`http://localhost:3001/${name}`);
 
+        const getOptions: RequestInit = {
+            method: "GET",
+            credentials: "include",
+        }
         // This is just for local, FE-only development to hit the API:
-        const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${name}/`);
+        const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${name}/`, getOptions);
 
         const data = await response.json();
         setPokemon(data);

@@ -40,8 +40,6 @@ type queryUserTable struct {
 	Password  string
 }
 
-// TODO: also look into JWT and session tokens/cookies
-
 func (u *UsersHandler) SignUpUser(w http.ResponseWriter, r *http.Request) {
 	log.Println("in signup user")
 	defer r.Body.Close()
@@ -102,8 +100,8 @@ func (u *UsersHandler) SignUpUser(w http.ResponseWriter, r *http.Request) {
 		hashedPw,
 	)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
 		fmt.Printf("error inserting user into db: %+v\n", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
 	log.Println("creating jwt")
@@ -114,21 +112,10 @@ func (u *UsersHandler) SignUpUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	fmt.Printf("jwt token string: %+v\n", tokenString)
 	log.Printf("jwt token string: %+v\n", tokenString)
 
-	http.SetCookie(w, &http.Cookie{
-		Name:     "token",
-		Value:    tokenString,
-		Path:     "/",
-		SameSite: http.SameSiteLaxMode,
-
-		// MaxAge is 7 days, in seconds
-		MaxAge: 604800,
-
-		// Expires is also going to be 7 days
-		Expires: time.Now().Add(time.Hour * 24 * 7),
-	})
+	cook := CreateCookie(tokenString)
+	http.SetCookie(w, cook)
 
 	log.Println("after setting cookie")
 
@@ -175,23 +162,12 @@ func (u *UsersHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	http.SetCookie(w, &http.Cookie{
-		Name:     "token",
-		Value:    tokenString,
-		Path:     "/",
-		SameSite: http.SameSiteLaxMode,
-
-		// MaxAge is 7 days, in seconds
-		MaxAge: 604800,
-
-		// Expires is also going to be 7 days
-		Expires: time.Now().Add(time.Hour * 24 * 7),
-	})
-
-	w.WriteHeader(http.StatusOK)
+	cook := CreateCookie(tokenString)
+	http.SetCookie(w, cook)
 
 	// after successful login, we should redirect to "/" on the frontend, which
 	// we do
+	w.WriteHeader(http.StatusOK)
 }
 
 // hashPassword uses the bcrypt package to has a password with the default cost
@@ -237,4 +213,26 @@ func createJWT(username string) (string, error) {
 	}
 
 	return tokenString, nil
+}
+
+func CreateCookie(t string) *http.Cookie {
+	return &http.Cookie{
+		Name:  "token",
+		Value: t,
+		Path:  "/",
+		// SameSite: http.SameSiteNoneMode,
+
+		// MaxAge is 7 days, in seconds
+		MaxAge: 604800,
+
+		// Expires is also going to be 7 days
+		Expires: time.Now().Add(time.Hour * 24 * 7),
+
+		// Secure is set to false for local development
+		// TODO: Once this becomes like production, this should be `true`, or a
+		// function that reads an env var and returns a bool depending on env
+		Secure: false,
+
+		HttpOnly: true,
+	}
 }

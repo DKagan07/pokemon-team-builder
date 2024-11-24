@@ -77,8 +77,10 @@ func main() {
 
 	// Basic CORS
 	r.Use(cors.Handler(cors.Options{
-		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
-		AllowedOrigins: []string{"https://*", "http://*"},
+		AllowedOrigins: []string{
+			"http://localhost:3000", "http://localhost:3001",
+		}, // Use this to allow specific origin hosts
+		// AllowedOrigins: []string{"https://*", "http://*"},
 		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
@@ -116,7 +118,19 @@ func main() {
 		// Teams
 		// TODO: will need a GET and POST, POST to save the team, GET to get
 		// the team
-		r.Use(authHandler.EnsureLoggedIn)
+		r.Route("/teams", func(r chi.Router) {
+			r.Use(authHandler.EnsureLoggedIn)
+			// test endpoint that should be behind the auth stuff
+			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+				res, err := json.Marshal("get teams!")
+				if err != nil {
+					http.Error(w, http.StatusText(422), 422)
+				}
+				if _, err := w.Write(res); err != nil {
+					http.Error(w, http.StatusText(404), 404)
+				}
+			})
+		})
 	})
 
 	// Serve's up, man
