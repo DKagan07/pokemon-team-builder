@@ -121,15 +121,7 @@ func main() {
 		r.Route("/teams", func(r chi.Router) {
 			r.Use(authHandler.EnsureLoggedIn)
 			// test endpoint that should be behind the auth stuff
-			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-				res, err := json.Marshal("get teams!")
-				if err != nil {
-					http.Error(w, http.StatusText(422), 422)
-				}
-				if _, err := w.Write(res); err != nil {
-					http.Error(w, http.StatusText(404), 404)
-				}
-			})
+			r.Get("/", pokemonApiHandler.GetPokemonTeam)
 		})
 	})
 

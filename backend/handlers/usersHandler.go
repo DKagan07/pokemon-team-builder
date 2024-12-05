@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -41,7 +40,6 @@ type queryUserTable struct {
 }
 
 func (u *UsersHandler) SignUpUser(w http.ResponseWriter, r *http.Request) {
-	log.Println("in signup user")
 	defer r.Body.Close()
 	b, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -55,8 +53,6 @@ func (u *UsersHandler) SignUpUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	log.Printf("got user: %+v\n", loginInfo)
 
 	var queryUser queryUserTable
 	err = u.Db.QueryRow(context.Background(), "SELECT * FROM users WHERE name=$1", loginInfo.Username).
@@ -104,20 +100,14 @@ func (u *UsersHandler) SignUpUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	log.Println("creating jwt")
-
 	tokenString, err := createJWT(loginInfo.Username)
 	if err != nil {
 		fmt.Printf("error with creating JWT: %+v\n", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	log.Printf("jwt token string: %+v\n", tokenString)
-
 	cook := CreateCookie(tokenString)
 	http.SetCookie(w, cook)
-
-	log.Println("after setting cookie")
 
 	// return something here, like a 200
 	w.Header().Set("Access-Control-Allow-Credentials", "true")

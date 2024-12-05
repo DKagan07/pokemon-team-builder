@@ -326,5 +326,65 @@ func (p *PokemonApiHandler) GetMoveByName(w http.ResponseWriter, r *http.Request
 	}
 }
 
+type PokemonTeamSQLResponse struct {
+	User string
+	Team interface{}
+}
+
+// GetPokemonTeam is an authenticated endpoint that returns a list of teams for
+// a logged in user. It will return a 204 if there is no team saved
 func (p *PokemonApiHandler) GetPokemonTeam(w http.ResponseWriter, r *http.Request) {
+	username := r.Context().Value(UsernameKey).(string)
+	fmt.Println("username: ", username)
+
+	var team PokemonTeamSQLResponse
+	err := p.Db.QueryRow(context.Background(), "SELECT * FROM pokemonTeam WHERE username=$1;", username).
+		Scan(&team.User, &team.Team)
+	if err != pgx.ErrNoRows && err != nil {
+		fmt.Printf("error querying for team in db: %+v\n", err)
+		http.Error(w, fmt.Sprintf("error querying db: %v\n", err), http.StatusInternalServerError)
+		return
+	}
+	if err == pgx.ErrNoRows {
+		fmt.Println("no team found for user")
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	fmt.Printf("team: %+v\n", team.Team)
+}
+
+// SavePokemonTeam is an authenticated endpoint that will save a users team to
+// the database.
+func (p *PokemonApiHandler) SavePokemonTeam(w http.ResponseWriter, r *http.Request) {
+	username := r.Context().Value(UsernameKey).(string)
+	fmt.Println("username: ", username)
+
+	// Read the team from the request
+	defer r.Body.Close()
+	b, err := io.ReadAll(r.Body)
+	if err != nil {
+		fmt.Printf("error reading body of post request: %+v\n", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	var upt []types.Pokemon
+	if err = json.Unmarshal(b, &upt); err != nil {
+		fmt.Printf("error unmarshal json from post request: %+v\n", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Insert the team to the DB
+	var team PokemonTeamSQLResponse
+	if _, err = p.Db.Exec(
+		context.Background(),
+		"INSERT INTO pokemonTeam (username, team) VALUES ($1, $2);",
+		username,
+		team,
+	); err != nil {
+		fmt.Println("error here")
+	}
+
+	w.WriteHeader(http.StatusCreated)
 }

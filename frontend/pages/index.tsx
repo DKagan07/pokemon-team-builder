@@ -5,10 +5,11 @@ import MiniCard from "./components/pokemon-mini-card";
 import { DataContext } from "./context/dataContext";
 import TopBar from "./components/topbar";
 import { GetServerSideProps, GetServerSidePropsContext } from "next";
-import { ParsedUrlQuery } from "querystring";
 
 interface HomeProps {
+    message?: string
     pokemonTeamFromServer: Pokemon[]
+    isLoggedIn: boolean
 }
 
 // NOTE: All backend calls that require a user to be logged in should:
@@ -18,8 +19,12 @@ interface HomeProps {
 //      space) so our backend can verify it
 
 export default function Home(props: HomeProps) {
-    const { pokemonTeamFromServer } = props
+    const { pokemonTeamFromServer, isLoggedIn, message } = props
     console.log({ pokemonTeamFromServer })
+
+    if (message === undefined || message === "") {
+        // TODO: maybe do something here? Do I need to do anything here?
+    }
 
     const [pokemonName, setPokemonName] = useState("");
     const [pokemon, setPokemon] = useState<Pokemon>(InitialPokeSetter);
@@ -31,15 +36,14 @@ export default function Home(props: HomeProps) {
         // For names that have a space, ex. Iron Hands, we need to change it to:
         // "iron-hands"
         name = name.trim().replace(" ", "-").toLowerCase();
-        console.log({ name });
-        // const response = await fetch(`http://localhost:3001/${name}`);
-
         const getOptions: RequestInit = {
             method: "GET",
             credentials: "include",
         }
+
+        const response = await fetch(`http://localhost:3001/${name}`, getOptions);
         // This is just for local, FE-only development to hit the API:
-        const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${name}/`, getOptions);
+        // const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${name}/`, getOptions);
 
         const data = await response.json();
         setPokemon(data);
@@ -144,6 +148,11 @@ export default function Home(props: HomeProps) {
                 <></>
             )
             }
+            <div>
+                {isLoggedIn ? (
+                    <button>Save Team</button>
+                ) : <></>}
+            </div>
         </div >
     );
 }
@@ -157,14 +166,15 @@ export default function Home(props: HomeProps) {
 //
 // TODO: Setup such that if the cookie is present, we can have some setting of
 // the state in the main Home(). 
-export const getServerSideProps: GetServerSideProps<ParsedUrlQuery> = async (context: GetServerSidePropsContext) => {
+export const getServerSideProps: GetServerSideProps = async (context: GetServerSidePropsContext) => {
     const { req } = context
     const cookie = req.cookies
-    console.log({ cookie })
     if (!cookie) {
         return {
             props: {
-                message: "no cookie present"
+                message: "no cookie present",
+                pokemonTeamFromServer: [],
+                isLoggedIn: false,
             }
         }
     }
@@ -172,12 +182,37 @@ export const getServerSideProps: GetServerSideProps<ParsedUrlQuery> = async (con
     const token = cookie["token"]
     console.log({ token })
 
+    if (token === undefined) {
+        return {
+            props: {
+                message: "no token present, user is not logged in",
+                pokemonTeamFromServer: [],
+                isLoggedIn: false,
+            }
+        }
+    }
 
-    // This will eventually get filled in with the teams, with the
+    // TODO: This will eventually get filled in with the teams, with the
     // implementation of the teams endpoint
+
+    // const getTeamOptions: RequestInit = {
+    //     method: "GET",
+    //     credentials: "include",
+    // }
+    //
+    // const resp = await fetch("http://localhost:3000/teams", getTeamOptions)
+    // console.log("body: ", resp.body)
+    // try {
+    //     const data = await resp.json();
+    //     console.log("data from getTeams: ", data)
+    // } catch (e) {
+    //     console.error("error parsing response body json: ", e)
+    // }
+
     return {
         props: {
             pokemonTeamFromServer: [],
+            isLoggedIn: true,
         }
     }
 }
