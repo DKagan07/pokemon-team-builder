@@ -20,7 +20,6 @@ interface HomeProps {
 
 export default function Home(props: HomeProps) {
     const { pokemonTeamFromServer, isLoggedIn, message } = props
-    console.log({ pokemonTeamFromServer })
 
     if (message === undefined || message === "") {
         // TODO: maybe do something here? Do I need to do anything here?
@@ -49,6 +48,20 @@ export default function Home(props: HomeProps) {
         setPokemon(data);
         setPokemonState({ Pokemon: data, PokemonTeam: pokemonTeam })
     };
+
+    const saveTeamByName = async (team: Pokemon[]) => {
+        const configPostTeam: RequestInit = {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ team: team })
+        }
+
+        const res = await fetch("http://localhost:3001/teams", configPostTeam)
+        if (res.status !== 201) {
+            console.log("save did not work, got not a 201")
+        }
+    }
 
     const statsObj: { [key: string]: number } = {};
     let total = 0;
@@ -149,8 +162,8 @@ export default function Home(props: HomeProps) {
             )
             }
             <div>
-                {isLoggedIn ? (
-                    <button>Save Team</button>
+                {isLoggedIn && pokemonTeam.length >= 1 ? (
+                    <button onClick={() => { saveTeamByName(pokemonTeam) }}>Save Team</button>
                 ) : <></>}
             </div>
         </div >

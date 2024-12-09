@@ -58,7 +58,6 @@ type PokemonSQLResponse struct {
 // from database
 func (p *PokemonApiHandler) GetPokemonByName(w http.ResponseWriter, r *http.Request) {
 	pokename := chi.URLParam(r, "pokename")
-	fmt.Println("pokename: ", pokename)
 
 	// Query Db to see if we already have this pokemon "cached"
 	var pokemonSQL PokemonSQLResponse
@@ -85,8 +84,6 @@ func (p *PokemonApiHandler) GetPokemonByName(w http.ResponseWriter, r *http.Requ
 		}
 		return
 	}
-
-	fmt.Println("pokemon not in db")
 
 	// If not in db, we get the info from the API, and we need to add it to the
 	// db
@@ -368,20 +365,34 @@ func (p *PokemonApiHandler) SavePokemonTeam(w http.ResponseWriter, r *http.Reque
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	var upt []types.Pokemon
+	// The team we get from the frontend is a list of pokemon team names
+	// (strings). All of these names should be in our database already, so
+	// looking them up and saving them should be easy
+
+	var upt struct {
+		Team []types.Pokemon
+	}
 	if err = json.Unmarshal(b, &upt); err != nil {
 		fmt.Printf("error unmarshal json from post request: %+v\n", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
+	fmt.Printf("upt: %+v\n", upt.Team[0].Abilities)
+
+	tb, err := json.Marshal(upt.Team)
+	if err != nil {
+		fmt.Printf("error marshal json for db insertion: %+v\n", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	// Insert the team to the DB
-	var team PokemonTeamSQLResponse
 	if _, err = p.Db.Exec(
 		context.Background(),
 		"INSERT INTO pokemonTeam (username, team) VALUES ($1, $2);",
 		username,
-		team,
+		tb,
 	); err != nil {
 		fmt.Println("error here")
 	}

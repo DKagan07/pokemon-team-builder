@@ -1,4 +1,5 @@
 import Link from "next/link"
+// import { Pokemon } from "@/lib/pokemon"
 
 export default function TopBar() {
     // TODO: need some conditional to see if someone is logged in
@@ -8,7 +9,7 @@ export default function TopBar() {
     return (
         <div>
             <div>
-                <button onClick={() => fetch("http://localhost:3001/teams", { method: 'GET', credentials: 'include' })}>
+                <button>
                     Teams
                 </button>
             </div>

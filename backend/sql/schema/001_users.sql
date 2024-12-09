@@ -5,7 +5,7 @@ CREATE TABLE pokemonMove (name VARCHAR(255) PRIMARY KEY UNIQUE, resonse JSONB);
 CREATE TABLE pokemonItem (name VARCHAR(255) PRIMARY KEY UNIQUE, resonse JSONB);
 CREATE TABLE pokemonNature (name VARCHAR(255) PRIMARY KEY UNIQUE, resonse JSONB);
 CREATE TABLE pokemonStat (name VARCHAR(255) PRIMARY KEY UNIQUE, resonse JSONB);
-CREATE TABLE pokemonTeam (username VARCHAR(255), team JSONB);
+CREATE TABLE pokemonTeam (t_id SERIAL PRIMARY KEY, username VARCHAR(255), team JSONB);
 
 
 -- +goose Down
@@ -15,3 +15,4 @@ DROP TABLE pokemonMove;
 DROP TABLE pokemonItem;
 DROP TABLE pokemonNature;
 DROP TABLE pokemonStat;
+DROP TABLE pokemonTeam;

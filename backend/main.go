@@ -122,6 +122,7 @@ func main() {
 			r.Use(authHandler.EnsureLoggedIn)
 			// test endpoint that should be behind the auth stuff
 			r.Get("/", pokemonApiHandler.GetPokemonTeam)
+			r.Post("/", pokemonApiHandler.SavePokemonTeam)
 		})
 	})
 
