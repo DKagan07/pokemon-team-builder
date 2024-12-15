@@ -16,3 +16,4 @@ build-backend-docker-image:
 delete-docker-stuff:
 	docker rm $$(docker ps -aq)
 	docker rmi $$(docker images -q)
+	docker volume prune -f

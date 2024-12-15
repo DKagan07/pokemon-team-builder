@@ -49,7 +49,7 @@ export default function Home(props: HomeProps) {
         setPokemonState({ Pokemon: data, PokemonTeam: pokemonTeam })
     };
 
-    const saveTeamByName = async (team: Pokemon[]) => {
+    const saveTeam = async (team: Pokemon[]) => {
         const configPostTeam: RequestInit = {
             method: "POST",
             credentials: "include",
@@ -72,7 +72,7 @@ export default function Home(props: HomeProps) {
 
     return (
         <div className="flex flex-col p-2">
-            <TopBar />
+            <TopBar isLoggedIn={isLoggedIn} />
             <p className="bold text-2xl mx-3 p-2">Search Pokemon Stats</p>
             <form id="pokename-form" className="flex">
                 <input
@@ -163,7 +163,7 @@ export default function Home(props: HomeProps) {
             }
             <div>
                 {isLoggedIn && pokemonTeam.length >= 1 ? (
-                    <button onClick={() => { saveTeamByName(pokemonTeam) }}>Save Team</button>
+                    <button className="border border-black rounded-md px-2" onClick={() => { saveTeam(pokemonTeam) }}>Save Team</button>
                 ) : <></>}
             </div>
         </div >
@@ -205,23 +205,22 @@ export const getServerSideProps: GetServerSideProps = async (context: GetServerS
         }
     }
 
-    // TODO: This will eventually get filled in with the teams, with the
-    // implementation of the teams endpoint
-
     // const getTeamOptions: RequestInit = {
     //     method: "GET",
     //     credentials: "include",
+    //     headers: {
+    //         'Cookie': `token=${token}`,
+    //     }
     // }
     //
-    // const resp = await fetch("http://localhost:3000/teams", getTeamOptions)
-    // console.log("body: ", resp.body)
+    // const resp = await fetch("http://backend:3000/teams", getTeamOptions)
     // try {
     //     const data = await resp.json();
     //     console.log("data from getTeams: ", data)
     // } catch (e) {
     //     console.error("error parsing response body json: ", e)
     // }
-
+    //
     return {
         props: {
             pokemonTeamFromServer: [],

@@ -324,8 +324,9 @@ func (p *PokemonApiHandler) GetMoveByName(w http.ResponseWriter, r *http.Request
 }
 
 type PokemonTeamSQLResponse struct {
-	User string
-	Team interface{}
+	SeqId int    `db:"t_id"`
+	User  string `db:"username"`
+	Team  string
 }
 
 // GetPokemonTeam is an authenticated endpoint that returns a list of teams for
@@ -334,28 +335,58 @@ func (p *PokemonApiHandler) GetPokemonTeam(w http.ResponseWriter, r *http.Reques
 	username := r.Context().Value(UsernameKey).(string)
 	fmt.Println("username: ", username)
 
-	var team PokemonTeamSQLResponse
-	err := p.Db.QueryRow(context.Background(), "SELECT * FROM pokemonTeam WHERE username=$1;", username).
-		Scan(&team.User, &team.Team)
-	if err != pgx.ErrNoRows && err != nil {
-		fmt.Printf("error querying for team in db: %+v\n", err)
-		http.Error(w, fmt.Sprintf("error querying db: %v\n", err), http.StatusInternalServerError)
-		return
+	// var team PokemonTeamSQLResponse
+	// err := p.Db.QueryRow(context.Background(), "SELECT * FROM pokemonTeam WHERE username=$1;", username).
+	// 	Scan(&team.SeqId, &team.User, &team.Team)
+	// if err != pgx.ErrNoRows && err != nil {
+	// 	fmt.Printf("error querying for team in db: %+v\n", err)
+	// 	http.Error(w, fmt.Sprintf("error querying db: %v\n", err), http.StatusInternalServerError)
+	// 	return
+	// }
+	// if err == pgx.ErrNoRows {
+	// 	fmt.Println("no team found for user")
+	// 	w.WriteHeader(http.StatusNoContent)
+	// 	return
+	// }
+
+	rows, err := p.Db.Query(
+		context.Background(),
+		"SELECT * FROM pokemonTeam WHERE username=$1;",
+		username,
+	)
+	teams, err := pgx.CollectRows(rows, pgx.RowToStructByName[PokemonTeamSQLResponse])
+	if err != nil {
+		fmt.Println("error collectiong rows: ", err)
 	}
-	if err == pgx.ErrNoRows {
-		fmt.Println("no team found for user")
-		w.WriteHeader(http.StatusNoContent)
+
+	mTeams := make([][]types.Pokemon, len(teams))
+	for _, v := range teams {
+		// fmt.Println("test second sql query: ", v.Team[0].Name)
+
+		var te []types.Pokemon
+		if err = json.Unmarshal([]byte(v.Team), &te); err != nil {
+			fmt.Println("error with unmarshal after test: ", err)
+		}
+		mTeams = append(mTeams, te)
+	}
+
+	by, err := json.Marshal(mTeams)
+	if err != nil {
+		http.Error(w, "marshaling json", http.StatusInternalServerError)
 		return
 	}
 
-	fmt.Printf("team: %+v\n", team.Team)
+	w.Header().Add("Content-Type", "application/json")
+	if _, err := w.Write(by); err != nil {
+		http.Error(w, "writing to response", http.StatusInternalServerError)
+		return
+	}
 }
 
 // SavePokemonTeam is an authenticated endpoint that will save a users team to
 // the database.
 func (p *PokemonApiHandler) SavePokemonTeam(w http.ResponseWriter, r *http.Request) {
 	username := r.Context().Value(UsernameKey).(string)
-	fmt.Println("username: ", username)
 
 	// Read the team from the request
 	defer r.Body.Close()
@@ -378,13 +409,8 @@ func (p *PokemonApiHandler) SavePokemonTeam(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	fmt.Printf("upt: %+v\n", upt.Team[0].Abilities)
-
-	tb, err := json.Marshal(upt.Team)
-	if err != nil {
-		fmt.Printf("error marshal json for db insertion: %+v\n", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	for _, v := range upt.Team {
+		fmt.Println("poke name: ", v.Name)
 	}
 
 	// Insert the team to the DB
@@ -392,10 +418,33 @@ func (p *PokemonApiHandler) SavePokemonTeam(w http.ResponseWriter, r *http.Reque
 		context.Background(),
 		"INSERT INTO pokemonTeam (username, team) VALUES ($1, $2);",
 		username,
-		tb,
+		upt.Team,
 	); err != nil {
-		fmt.Println("error here")
+		http.Error(
+			w,
+			fmt.Sprintf("error inserting team into db: %+v", err),
+			http.StatusInternalServerError,
+		)
+		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
 }
+
+// // Note: This works -- I have to convert the team to a []byte and unmarshal
+// // it into a []types.Pokemon because it's stored in the db as a json blob
+// var tss struct {
+// 	Id       int
+// 	Username string
+// 	Team     string
+// }
+// err = p.Db.QueryRow(context.Background(), "SELECT * FROM pokemonTeam WHERE username=$1;", username).
+// 	Scan(&tss.Id, &tss.Username, &tss.Team)
+// if err != pgx.ErrNoRows && err != nil {
+// 	fmt.Printf("error querying row: %+v\n", err)
+// }
+//
+// var te []types.Pokemon
+// if err = json.Unmarshal([]byte(tss.Team), &te); err != nil {
+// 	fmt.Println("error with unmarshal after test: ", err)
+// }
