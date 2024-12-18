@@ -1,6 +1,7 @@
 import { Pokemon } from "@/lib/pokemon"
 import { GetServerSideProps, GetServerSidePropsContext } from "next"
 import TopBar from "../components/topbar"
+import PokemonTeam from "../components/pokemon-team"
 
 interface TeamProps {
     message?: string
@@ -28,7 +29,14 @@ export default function Home(props: TeamProps) {
     return (
         <div className="flex flex-col p-2">
             <TopBar isLoggedIn={true} page={"teams"} />
-            <h2>Teams page</h2>
+            <div className="p-2">
+                <h2>Teams page</h2>
+                {pokemonTeamsFromServer.map((team, i) => {
+                    return (
+                        <PokemonTeam key={i} team={team} teamNum={i + 1} />
+                    )
+                })}
+            </div>
         </div>
     )
 }
@@ -46,7 +54,6 @@ export const getServerSideProps: GetServerSideProps = async (context: GetServerS
     }
 
     const token = cookie["token"]
-    console.log({ token })
 
     if (token === undefined) {
         return {
