@@ -160,6 +160,73 @@ func (u *UsersHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func (u *UsersHandler) LogOutUser(w http.ResponseWriter, r *http.Request) {
+	usernameFromToken := r.Context().Value(UsernameKey).(string)
+
+	defer r.Body.Close()
+	b, err := io.ReadAll(r.Body)
+	if err != nil {
+		fmt.Printf("error reading body of post request: %+v\n", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	var logoutUsername struct {
+		UserLoggedIn string `json:"UserLoggedIn"`
+	}
+
+	if err := json.Unmarshal(b, &logoutUsername); err != nil {
+		fmt.Printf("error unmarshal json from post request: %+v\n", err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	fmt.Println("usernameFromToken: ", usernameFromToken)
+	fmt.Println("usernameFromFrontend: ", logoutUsername.UserLoggedIn)
+
+	if usernameFromToken == logoutUsername.UserLoggedIn {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	http.Error(w, fmt.Sprintf("user %s cannot log out", usernameFromToken), http.StatusForbidden)
+}
+
+func (u *UsersHandler) GetUsername(w http.ResponseWriter, r *http.Request) {
+	username := r.Context().Value(UsernameKey).(string)
+
+	var v struct {
+		Username string `json:"username"`
+	}
+	if err := json.Unmarshal([]byte(username), &v); err != nil {
+		http.Error(
+			w,
+			fmt.Sprintf("Unmarshal json into struct: %v\n", err),
+			http.StatusInternalServerError,
+		)
+		return
+	}
+
+	b, err := json.Marshal(v)
+	if err != nil {
+		http.Error(
+			w,
+			fmt.Sprintf("marshaling json: %v\n", err),
+			http.StatusInternalServerError,
+		)
+		return
+	}
+
+	w.Header().Add("Content-Type", "application/json")
+	if _, err = w.Write(b); err != nil {
+		http.Error(
+			w,
+			fmt.Sprintf("writing username to w: %v\n", err),
+			http.StatusInternalServerError,
+		)
+		return
+	}
+}
+
 // hashPassword uses the bcrypt package to has a password with the default cost
 // Of note, no need to salt passwords. Using bcrypt's GenerateFromPassword
 // method, bcrypt automatically generates a random salt and incorporates it

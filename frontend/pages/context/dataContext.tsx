@@ -7,25 +7,26 @@ import {
     useState,
 } from "react";
 
-export type PokemonState = {
+export type State = {
     Pokemon: Pokemon;
     PokemonTeam: Pokemon[];
+    UserLoggedIn: string;
 }
 
 interface DataContextType {
-    pokemonState: PokemonState;
-    setPokemonState: Dispatch<SetStateAction<PokemonState>>;
+    pokemonState: State;
+    setPokemonState: Dispatch<SetStateAction<State>>;
 }
 
 const DataContext = createContext<DataContextType>({
-    pokemonState: { Pokemon: InitialPokeSetter, PokemonTeam: [] },
+    pokemonState: { Pokemon: InitialPokeSetter, PokemonTeam: [], UserLoggedIn: "" },
     setPokemonState: () => { }
 });
 
 export const DataProvider: React.FC<{ children: ReactNode }> = ({
     children,
 }) => {
-    const [pokemonState, setPokemonState] = useState<PokemonState>({ Pokemon: InitialPokeSetter, PokemonTeam: [] });
+    const [pokemonState, setPokemonState] = useState<State>({ Pokemon: InitialPokeSetter, PokemonTeam: [], UserLoggedIn: "" });
 
     return (
         <DataContext.Provider value={{ pokemonState, setPokemonState }}>

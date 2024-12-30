@@ -1,5 +1,6 @@
 import { useRouter } from "next/router"
-import { useState } from "react"
+import { useContext, useState } from "react"
+import { DataContext } from "../context/dataContext"
 
 export default function Home() {
     const router = useRouter()
@@ -7,6 +8,7 @@ export default function Home() {
     const [username, setUsername] = useState<string>("")
     const [password, setPassword] = useState<string>("")
     const [validatedPw, setValidatedPw] = useState<string>("")
+    const { pokemonState, setPokemonState } = useContext(DataContext);
 
     // Regexes to validate passwords
     const lower = /[a-z]/;
@@ -71,8 +73,13 @@ export default function Home() {
         // the homepage
         // The getServerSideProps on the homepage should pick up the cookie and
         // set up the team that way
-        if (response.status < 299) {
+        if (response.status <= 299) {
             console.log("good response")
+            setPokemonState({
+                Pokemon: pokemonState.Pokemon,
+                PokemonTeam: pokemonState.PokemonTeam,
+                UserLoggedIn: username
+            })
 
             router.push("/")
         }

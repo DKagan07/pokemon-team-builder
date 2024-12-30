@@ -2,6 +2,8 @@ import { Pokemon } from "@/lib/pokemon"
 import { GetServerSideProps, GetServerSidePropsContext } from "next"
 import TopBar from "../components/topbar"
 import PokemonTeam from "../components/pokemon-team"
+import { useContext } from "react"
+import { DataContext } from "../context/dataContext"
 
 interface TeamProps {
     message?: string
@@ -10,6 +12,7 @@ interface TeamProps {
 
 export default function Home(props: TeamProps) {
     const { message, pokemonTeamsFromServer } = props
+    const { pokemonState, setPokemonState } = useContext(DataContext);
 
     // Clean pokemonTeamsFromServer
     //
@@ -28,7 +31,7 @@ export default function Home(props: TeamProps) {
 
     return (
         <div className="flex flex-col p-2">
-            <TopBar isLoggedIn={true} page={"teams"} />
+            <TopBar isLoggedIn={true} page={"teams"} pokeState={pokemonState} setPokeState={setPokemonState} />
             <div className="p-2">
                 <h2>Teams page</h2>
                 {pokemonTeamsFromServer.map((team, i) => {

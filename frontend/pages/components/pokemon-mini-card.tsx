@@ -2,30 +2,33 @@ import { Pokemon } from "@/lib/pokemon";
 import Image from "next/image";
 import Link from "next/link";
 import { Dispatch, SetStateAction } from "react";
-import { PokemonState } from "../context/dataContext";
+import { State } from "../context/dataContext";
 
 function removeFromTeam(
     mon: Pokemon,
     team: Pokemon[],
+    state: State,
     setTeam: Dispatch<SetStateAction<Pokemon[]>>,
-    setState: Dispatch<SetStateAction<PokemonState>>
+    setState: Dispatch<SetStateAction<State>>
 ): void {
     const newTeam = team.filter((poke) => poke !== mon);
     setTeam(newTeam);
-    setState({ Pokemon: mon, PokemonTeam: newTeam })
+    setState({ Pokemon: mon, PokemonTeam: newTeam, UserLoggedIn: state.UserLoggedIn })
 }
 
 export default function MiniCard({
     pokemon,
     team,
+    state,
     setTeam,
     setData,
     item,
 }: {
     pokemon: Pokemon;
     team: Pokemon[];
+    state: State,
     setTeam: Dispatch<SetStateAction<Pokemon[]>>;
-    setData: Dispatch<SetStateAction<PokemonState>>;
+    setData: Dispatch<SetStateAction<State>>;
     item: number;
 }) {
     if (pokemon === undefined || pokemon.name === "") {
@@ -63,7 +66,7 @@ export default function MiniCard({
                 <div className="px-4 align-middle">
                     <button
                         onClick={() => {
-                            removeFromTeam(pokemon, team, setTeam, setData);
+                            removeFromTeam(pokemon, team, state, setTeam, setData);
                         }}
                         className="h-[20px] w-[20px]"
                     >
@@ -81,7 +84,7 @@ export default function MiniCard({
                     <button
                         className="border border-black rounded-md w-auto px-1"
                         onClick={() => {
-                            setData({ Pokemon: pokemon, PokemonTeam: team });
+                            setData({ Pokemon: pokemon, PokemonTeam: team, UserLoggedIn: state.UserLoggedIn });
                         }}
                     >
                         See moves

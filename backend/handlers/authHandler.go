@@ -28,7 +28,10 @@ func NewAuthHandler( /*db *pgx.Conn*/ ) *AuthHandler {
 // from the JWT token
 type contextKey string
 
-const UsernameKey contextKey = "username"
+const (
+	UsernameKey contextKey = "username"
+	TokenKey    contextKey = "token"
+)
 
 // EnsureLoggedIn is a middleware function that will ideally gate users to hit
 // ceratin endpoints based on whether they are logged in.
@@ -62,6 +65,13 @@ func (a *AuthHandler) EnsureLoggedIn(next http.Handler) http.Handler {
 		// handler so we have access to it
 		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 			ctx := context.WithValue(r.Context(), UsernameKey, claims["username"])
+
+			// TODO: testing this, however this doesn't seem to work -- perhaps
+			// I'm doing this wrong, but that's ok -- still not sure why I
+			// Initially wanted to keep the tokenString
+			//
+			// ctx = context.WithValue(r.Context(), TokenKey, claims["tokenString"])
+
 			r = r.WithContext(ctx)
 		}
 

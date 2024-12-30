@@ -46,7 +46,7 @@ export default function Home(props: HomeProps) {
 
         const data = await response.json();
         setPokemon(data);
-        setPokemonState({ Pokemon: data, PokemonTeam: pokemonTeam })
+        setPokemonState({ Pokemon: data, PokemonTeam: pokemonTeam, UserLoggedIn: "" })
     };
 
     const saveTeam = async (team: Pokemon[]) => {
@@ -72,7 +72,7 @@ export default function Home(props: HomeProps) {
 
     return (
         <div className="flex flex-col p-2">
-            <TopBar isLoggedIn={isLoggedIn} />
+            <TopBar isLoggedIn={isLoggedIn} page={"homepage"} pokeState={pokemonState} setPokeState={setPokemonState} />
             <p className="bold text-2xl mx-3 p-2">Search Pokemon Stats</p>
             <form id="pokename-form" className="flex">
                 <input
@@ -139,6 +139,7 @@ export default function Home(props: HomeProps) {
                             item={i + 1}
                             pokemon={mon}
                             team={pokemonTeam}
+                            state={pokemonState}
                             setTeam={setPokemonTeam}
                             setData={setPokemonState}
                         />
@@ -152,6 +153,7 @@ export default function Home(props: HomeProps) {
                             item={i + 1}
                             pokemon={mon}
                             team={pokemonTeam}
+                            state={pokemonState}
                             setTeam={setPokemonTeam}
                             setData={setPokemonState}
                         />
@@ -193,7 +195,6 @@ export const getServerSideProps: GetServerSideProps = async (context: GetServerS
     }
 
     const token = cookie["token"]
-    console.log({ token })
 
     if (token === undefined) {
         return {
@@ -205,22 +206,6 @@ export const getServerSideProps: GetServerSideProps = async (context: GetServerS
         }
     }
 
-    // const getTeamOptions: RequestInit = {
-    //     method: "GET",
-    //     credentials: "include",
-    //     headers: {
-    //         'Cookie': `token=${token}`,
-    //     }
-    // }
-    //
-    // const resp = await fetch("http://backend:3000/teams", getTeamOptions)
-    // try {
-    //     const data = await resp.json();
-    //     console.log("data from getTeams: ", data)
-    // } catch (e) {
-    //     console.error("error parsing response body json: ", e)
-    // }
-    //
     return {
         props: {
             pokemonTeamFromServer: [],

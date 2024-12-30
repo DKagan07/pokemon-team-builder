@@ -106,6 +106,7 @@ func main() {
 		r.Route("/users", func(r chi.Router) {
 			r.Post("/signup", usersHandler.SignUpUser)
 			r.Post("/login", usersHandler.LoginUser)
+			r.With(authHandler.EnsureLoggedIn).Post("/logout", usersHandler.LogOutUser)
 		})
 
 		// Pokemon
@@ -118,6 +119,7 @@ func main() {
 		// Teams
 		// TODO: will need a GET and POST, POST to save the team, GET to get
 		// the team
+		r.With(authHandler.EnsureLoggedIn).Get("/name", usersHandler.GetUsername)
 		r.Route("/teams", func(r chi.Router) {
 			r.Use(authHandler.EnsureLoggedIn)
 			// test endpoint that should be behind the auth stuff
