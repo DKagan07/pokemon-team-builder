@@ -26,6 +26,7 @@ export default function TopBar({
         }
 
         try {
+            // This API request should also delete the cookie on the client
             const response = await fetch("http://localhost:3001/users/logout", postOptions)
             if (response.status >= 200 && response.status <= 299) {
                 setPokeState({ Pokemon: pokeState.Pokemon, PokemonTeam: pokeState.PokemonTeam, UserLoggedIn: "" })
@@ -33,13 +34,8 @@ export default function TopBar({
         } catch (e) {
             console.log("error: ", e)
         }
-
     }
 
-    // TODO: need some conditional to see if someone is logged in
-    // for now, we'll just have a login button
-    // Also, the teams button is there for testing an authenticated endpoint
-    // remove when needed
     return (
         <div className="flex justify-between w-full p-2">
             <div className="flex">

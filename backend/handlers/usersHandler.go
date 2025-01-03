@@ -109,7 +109,6 @@ func (u *UsersHandler) SignUpUser(w http.ResponseWriter, r *http.Request) {
 	cook := CreateCookie(tokenString)
 	http.SetCookie(w, cook)
 
-	// return something here, like a 200
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 	w.WriteHeader(http.StatusCreated)
 }
@@ -180,10 +179,17 @@ func (u *UsersHandler) LogOutUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println("usernameFromToken: ", usernameFromToken)
-	fmt.Println("usernameFromFrontend: ", logoutUsername.UserLoggedIn)
-
 	if usernameFromToken == logoutUsername.UserLoggedIn {
+		// delete the cookie here by setting the cookie back in time
+		http.SetCookie(w, &http.Cookie{
+			Name:     "token",
+			Value:    "",
+			Path:     "/",
+			MaxAge:   -1,
+			Expires:  time.Unix(0, 0),
+			HttpOnly: true,
+		})
+
 		w.WriteHeader(http.StatusOK)
 		return
 	}
