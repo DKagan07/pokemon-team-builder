@@ -4,7 +4,7 @@
 
 This is a personal project that I am using to practice a full-stack web
 application using Go in the backend, NextJS (pages router) with TS in the
-frontend, and Docker for local deployment, all built from scratch.
+frontend, and Docker for local deployment, all built from scratch
 
 This is currently setup such that, while Docker is running, anybody can run
 `make docker-images` to create the images and `docker compose up` to run all the
