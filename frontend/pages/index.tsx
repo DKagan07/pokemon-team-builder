@@ -21,14 +21,15 @@ interface HomeProps {
 export default function Home(props: HomeProps) {
     const { pokemonTeamFromServer, isLoggedIn, message } = props
 
-    if (message === undefined || message === "") {
-        // TODO: maybe do something here? Do I need to do anything here?
-    }
-
     const [pokemonName, setPokemonName] = useState("");
     const [pokemon, setPokemon] = useState<Pokemon>(InitialPokeSetter);
     const [pokemonTeam, setPokemonTeam] = useState<Pokemon[]>(pokemonTeamFromServer);
     const { pokemonState, setPokemonState } = useContext(DataContext);
+
+    if (message === undefined || message === "") {
+        // TODO: maybe do something here? Do I need to do anything here?
+    }
+
 
     // fetchPokemon gets the pokemon information 
     const fetchPokemon = async (name: string) => {
@@ -37,14 +38,16 @@ export default function Home(props: HomeProps) {
         name = name.trim().replace(" ", "-").toLowerCase();
         const getOptions: RequestInit = {
             method: "GET",
+            // LOCAL: for local development, comment out this line
             credentials: "include",
         }
 
         const response = await fetch(`http://localhost:3001/${name}`, getOptions);
+
         // This is just for local, FE-only development to hit the API:
         // const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${name}/`, getOptions);
-
         const data = await response.json();
+
         setPokemon(data);
         setPokemonState({ Pokemon: data, PokemonTeam: pokemonTeam, UserLoggedIn: "" })
     };

@@ -14,6 +14,6 @@ build-backend-docker-image:
 
 .PHONY: delete-docker-stuff
 delete-docker-stuff:
-	docker rm $$(docker ps -aq)
-	docker rmi $$(docker images -q)
+	docker rm -f $$(docker ps -aq)
+	docker rmi -f $$(docker images -q)
 	docker volume prune -f

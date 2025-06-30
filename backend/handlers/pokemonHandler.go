@@ -309,10 +309,12 @@ func (p *PokemonApiHandler) GetMoveByName(w http.ResponseWriter, r *http.Request
 
 	var moveInfo types.Move
 	if err = json.Unmarshal(b, &moveInfo); err != nil {
+		fmt.Println("failed to unmarshal move: ", err)
 		http.Error(w, "unmarshal resp body into move", http.StatusInternalServerError)
 	}
 
 	if _, err = p.Db.Exec(context.Background(), "INSERT INTO pokemonMove (name, response) VALUES ($1, $2);", moveInfo.Name, moveInfo); err != nil {
+		fmt.Println("failed to insert move into db: ", err)
 		http.Error(w, fmt.Sprintf("inserting into db: %v", err), http.StatusInternalServerError)
 	}
 
@@ -354,6 +356,11 @@ func (p *PokemonApiHandler) GetPokemonTeam(w http.ResponseWriter, r *http.Reques
 		"SELECT * FROM pokemonTeam WHERE username=$1;",
 		username,
 	)
+	if err != nil {
+		// TODO: error handling here
+		fmt.Println("error querying for teams: ", err)
+	}
+
 	teams, err := pgx.CollectRows(rows, pgx.RowToStructByName[PokemonTeamSQLResponse])
 	if err != nil {
 		fmt.Println("error collectiong rows: ", err)
